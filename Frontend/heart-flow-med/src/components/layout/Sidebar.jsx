@@ -39,9 +39,10 @@ const Sidebar = () => {
         return [
           ...commonItems,
           { name: 'My Patients', href: '/my-patients', icon: Users },
-          { name: 'Appointments', href: '/appointments', icon: Calendar },
+          { name: 'Create Doctors Availability', href: '/create-doctors-availability', icon: ActivityIcon },
+          { name: 'My Appointments', href: '/doctor-appointments', icon: Calendar },
           { name: 'Medical Records', href: '/records', icon: FileText },
-          { name: 'Diagnostics', href: '/diagnostics', icon: Activity },
+          { name: 'Assign Sonographers', href: '/assign-sonographers', icon: Activity },
         ];
       case 'Nurse':
         return [
@@ -57,7 +58,7 @@ const Sidebar = () => {
           { name: 'My Appointments', href: '/my-appointments', icon: Calendar },
           { name: 'Medical History', href: '/medical-history', icon: FileText },
           { name: 'Test Results', href: '/test-results', icon: ClipboardList },
-          { name: 'Billing History', href: '/bill-history', icon: ClipboardList },
+          { name: 'Billing History', href: '/billing-records', icon: ClipboardList },
         ];
       case 'Administrative Staff':
         return [
@@ -66,7 +67,7 @@ const Sidebar = () => {
           { name: 'Doctors Availability', href: '/doctors-availability', icon: ActivityIcon },
           { name: 'Appointments', href: '/appointments', icon: Calendar },
           { name: 'Medical Records', href: '/records', icon: FileText },
-          { name: 'Billing', href: '/billing', icon: FileText },
+          { name: 'Billing', href: '/billing-records', icon: ClipboardList },
         ];
       default:
         return commonItems;

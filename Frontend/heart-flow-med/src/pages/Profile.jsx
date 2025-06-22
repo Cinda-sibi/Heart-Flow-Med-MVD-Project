@@ -141,15 +141,15 @@ const Profile = () => {
           <p className="text-gray-600">View and manage your profile information.</p>
         </div>
         {/* Profile Header Card */}
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-lg shadow flex items-center space-x-4">
+        <div className=" bg-gray-200 p-6 rounded-lg shadow flex items-center text-black space-x-4">
           <div className="h-20 w-20 rounded-full bg-white flex items-center justify-center">
             <User className="h-10 w-10 text-blue-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-black">
               {profile?.first_name} {profile?.last_name}
             </h1>
-            <p className="text-blue-100 capitalize">{profile?.role}</p>
+            <p className="text-black capitalize">{profile?.role}</p>
           </div>
         </div>
         {/* Basic Information Card */}

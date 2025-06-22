@@ -26,6 +26,13 @@ import MedicalHistory from './pages/dashboard/patient/MedicalHistory';
 // import sidebars pages administrative staff
 import PatientsRecord from './pages/sidebarpages/administrativestaff/PatientsRecord';
 import DoctorAvailability from './pages/sidebarpages/administrativestaff/DoctorAvailability';
+import BillingRecords from './pages/sidebarpages/administrativestaff/BillingRecords';
+
+// import sidebars pages doctors
+import CreateDoctorAvailability from './pages/sidebarpages/doctors/CreateDoctorAvailability';
+import DoctorAppointments from './pages/sidebarpages/doctors/DoctorAppointments';
+import AssiginingToSonographers from './pages/sidebarpages/doctors/AssiginingToSonographers';
+
 
 // Protected Route Component with role-based routing
 const ProtectedRoute = ({ children }) => {
@@ -125,6 +132,63 @@ function AppRoutes() {
         />
       )}
 
+      {/* Cardiologist: My Patients Route */}
+       {user?.role === 'Cardiologist' && (
+        <Route 
+          path="/my-patients" 
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <MedicalHistory />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
+        />
+      )}
+
+      {/* Cardiologist: Doctors Availability Route */}
+{user?.role === 'Cardiologist' && (
+        <Route 
+          path="/create-doctors-availability" 
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <CreateDoctorAvailability />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
+        />
+      )}
+
+      {/* Cardiologist: Doctors Appointments Route */}
+      {user?.role === 'Cardiologist' && (
+        <Route 
+          path="/doctor-appointments" 
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <DoctorAppointments />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
+        />
+      )}
+
+      {/* Cardiologist: Assign Sonographers Route */}
+      {user?.role === 'Cardiologist' && (
+        <Route 
+          path="/assign-sonographers" 
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <AssiginingToSonographers />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
+        />
+      )}
+
+      {/* Patient: Medical History Route */}
       {user?.role === 'Patient' && (
         <Route 
           path="/medical-history" 
@@ -160,6 +224,20 @@ function AppRoutes() {
             <ProtectedRoute>
               <LayoutWrapper>
                 <DoctorAvailability />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          }
+        />
+      )}
+
+      {/* Administrative Staff: Billing Records Route */}
+      {user?.role === 'Administrative Staff' && (
+        <Route
+          path="/billing-records"
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <BillingRecords />
               </LayoutWrapper>
             </ProtectedRoute>
           }

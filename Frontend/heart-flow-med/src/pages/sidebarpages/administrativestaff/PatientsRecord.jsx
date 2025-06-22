@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { User } from 'lucide-react';
 import Modal from "../../../components/layout/Modal";
-import { getAllPatients, addPatient, searchPatient } from '../../../apis/AdministrativeStaffDashboardApis';
+import { getAllPatients, addPatient, searchPatient, getPatientById } from '../../../apis/AdministrativeStaffDashboardApis';
 
 const PatientsRecord = () => {
   const [patients, setPatients] = useState([]);
+  const [allPatients, setAllPatients] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState({
     email: '',
@@ -23,40 +24,29 @@ const PatientsRecord = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [search, setSearch] = useState({ first_name: '', last_name: '', unique_id: '' });
-  const [searching, setSearching] = useState(false);
+  const [searchName, setSearchName] = useState("");
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewPatient, setViewPatient] = useState(null);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [viewError, setViewError] = useState('');
 
   // Fetch patients on mount
   useEffect(() => {
     fetchPatients();
   }, []);
 
-  // Debounced search effect
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (
-        search.first_name.trim() ||
-        search.last_name.trim() ||
-        search.unique_id.trim()
-      ) {
-        handleSearch();
-      } else {
-        fetchPatients();
-      }
-    }, 500);
-    return () => clearTimeout(handler);
-    // eslint-disable-next-line
-  }, [search]);
-
   const fetchPatients = async () => {
     setLoading(true);
     setError('');
     try {
       const data = await getAllPatients();
-      setPatients(Array.isArray(data.data) ? data.data : []);
+      const patientList = Array.isArray(data.data) ? data.data : [];
+      setAllPatients(patientList);
+      setPatients(patientList);
     } catch (err) {
       setError('Failed to load patients.');
       setPatients([]);
+      setAllPatients([]);
     } finally {
       setLoading(false);
     }
@@ -145,64 +135,80 @@ const PatientsRecord = () => {
     }
   };
 
-  const handleSearchInput = (e) => {
-    setSearch({ ...search, [e.target.name]: e.target.value });
+  const handleSearch = () => {
+    if (!searchName.trim()) return;
+    const filtered = allPatients.filter((p) => {
+      const name = (p.first_name && p.last_name)
+        ? `${p.first_name} ${p.last_name}`
+        : p.name || p.full_name || p.username || '';
+      return name.toLowerCase().includes(searchName.trim().toLowerCase());
+    });
+    setPatients(filtered);
   };
 
-  const handleSearch = async () => {
-    setSearching(true);
-    setError('');
+  const handleClearSearch = () => {
+    setSearchName("");
+    setPatients(allPatients);
+  };
+
+  const handleViewPatient = async (id) => {
+    setViewLoading(true);
+    setViewError('');
+    setViewPatient(null);
+    setViewModalOpen(true);
     try {
-      const params = {};
-      if (search.first_name.trim()) params.first_name = search.first_name.trim();
-      if (search.last_name.trim()) params.last_name = search.last_name.trim();
-      if (search.unique_id.trim()) params.unique_id = search.unique_id.trim();
-      const data = await searchPatient(params);
-      setPatients(Array.isArray(data.data) ? data.data : []);
+      const res = await getPatientById(id);
+      if (res && res.status) {
+        setViewPatient(res.data);
+      } else {
+        setViewError('Failed to fetch patient details.');
+      }
     } catch (err) {
-      setError('Failed to search patients.');
-      setPatients([]);
+      setViewError('Failed to fetch patient details.');
     } finally {
-      setSearching(false);
+      setViewLoading(false);
     }
+  };
+
+  const closeViewModal = () => {
+    setViewModalOpen(false);
+    setViewPatient(null);
+    setViewError('');
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Patients</h1>
-        <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-          <input
-            type="text"
-            name="first_name"
-            value={search.first_name}
-            onChange={handleSearchInput}
-            className="border rounded px-3 py-2"
-            placeholder="Search by First Name"
-            disabled={loading || searching}
-          />
-          <input
-            type="text"
-            name="last_name"
-            value={search.last_name}
-            onChange={handleSearchInput}
-            className="border rounded px-3 py-2"
-            placeholder="Search by Last Name"
-            disabled={loading || searching}
-          />
-          <input
-            type="text"
-            name="unique_id"
-            value={search.unique_id}
-            onChange={handleSearchInput}
-            className="border rounded px-3 py-2"
-            placeholder="Search by Unique ID"
-            disabled={loading || searching}
-          />
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" onClick={openModal} disabled={loading || searching}>
-            Add Patient
-          </button>
-        </div>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" onClick={openModal}>
+          Add Patient
+        </button>
+      </div>
+
+      <div className="mb-4 flex items-center gap-2">
+        <input
+          type="text"
+          className="border rounded px-3 py-2 w-full max-w-xs"
+          placeholder="Search by name..."
+          value={searchName}
+          onChange={e => setSearchName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
+          disabled={loading}
+        />
+        <button
+          className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600"
+          onClick={handleSearch}
+          disabled={loading || !searchName.trim()}
+        >
+          Search
+        </button>
+        <button
+          className="bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300"
+          onClick={handleClearSearch}
+          disabled={loading || !searchName.trim()}
+        >
+          Clear
+        </button>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -210,7 +216,6 @@ const PatientsRecord = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-              
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
@@ -223,8 +228,11 @@ const PatientsRecord = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {patients.map((p) => (
-                <tr key={p.id || p.user_id}>
-                 
+                <tr
+                  key={p.id || p.user_id}
+                  className="cursor-pointer hover:bg-blue-50 transition"
+                  onClick={() => handleViewPatient(p.id || p.user_id)}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
@@ -239,10 +247,10 @@ const PatientsRecord = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{p.unique_id}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{p.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{p.phone}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{p.phone || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{p.gender}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{p.date_of_birth}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{p.country}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{p.country || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     {/* Future: Edit/Delete buttons */}
                   </td>
@@ -252,8 +260,6 @@ const PatientsRecord = () => {
           </table>
         </div>
       </div>
-
-      {(loading || searching) && <div className="text-center py-4">Loading...</div>}
 
       {/* Add Patient Modal */}
       <Modal isOpen={isModalOpen} onClose={closeModal}>
@@ -321,6 +327,71 @@ const PatientsRecord = () => {
             <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700" disabled={loading}>{loading ? 'Adding...' : 'Add Patient'}</button>
           </div>
         </form>
+      </Modal>
+
+      {/* View Patient Modal */}
+      <Modal isOpen={viewModalOpen} onClose={closeViewModal}>
+        <div className="rounded-lg overflow-hidden shadow-lg bg-white max-w-md mx-auto">
+          <div className="bg-blue-600 px-6 py-4 flex items-center gap-4">
+            <div className="flex-shrink-0">
+              <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                <User className="h-10 w-10 text-blue-600" />
+              </div>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-0">
+                {viewPatient?.user?.first_name} {viewPatient?.user?.last_name}
+              </h2>
+              <div className="text-blue-100 text-sm">Patient ID: {viewPatient?.unique_id}</div>
+            </div>
+          </div>
+          <div className="px-6 py-6">
+            {viewLoading ? (
+              <div className="text-center py-8">Loading...</div>
+            ) : viewError ? (
+              <div className="text-red-600 text-center text-sm">{viewError}</div>
+            ) : viewPatient ? (
+              <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="text-gray-500 text-xs">Email</div>
+                  <div className="font-medium">{viewPatient.user?.email}</div>
+                  <div className="text-gray-500 text-xs">Role</div>
+                  <div className="font-medium">{viewPatient.user?.role}</div>
+                  <div className="text-gray-500 text-xs">Phone</div>
+                  <div className="font-medium">{viewPatient.user?.phone || '-'}</div>
+                  <div className="text-gray-500 text-xs">Date of Birth</div>
+                  <div className="font-medium">{viewPatient.date_of_birth}</div>
+                  <div className="text-gray-500 text-xs">Gender</div>
+                  <div className="font-medium">{viewPatient.gender}</div>
+                  <div className="text-gray-500 text-xs">Age</div>
+                  <div className="font-medium">{viewPatient.age || '-'}</div>
+                  <div className="text-gray-500 text-xs">Country</div>
+                  <div className="font-medium">{viewPatient.country || '-'}</div>
+                </div>
+                <div className="border-t pt-4 mt-2">
+                  <div className="text-gray-700 font-semibold mb-2">Contact & Insurance</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-gray-500 text-xs">Address</div>
+                    <div className="font-medium">{viewPatient.address}</div>
+                    <div className="text-gray-500 text-xs">Emergency Contact</div>
+                    <div className="font-medium">{viewPatient.emergency_contact}</div>
+                    <div className="text-gray-500 text-xs">Insurance Provider</div>
+                    <div className="font-medium">{viewPatient.insurance_provider}</div>
+                    <div className="text-gray-500 text-xs">Insurance ID</div>
+                    <div className="font-medium">{viewPatient.insurance_id}</div>
+                  </div>
+                </div>
+                <div className="border-t pt-4 mt-2">
+                  <div className="text-gray-700 font-semibold mb-2">Allergies</div>
+                  <div className="font-medium">{Array.isArray(viewPatient.allergies) && viewPatient.allergies.length > 0 ? viewPatient.allergies.join(', ') : '-'}</div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <div className="bg-gray-50 px-6 py-3 flex justify-end">
+            <button className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition" onClick={closeViewModal}>Close</button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -162,11 +162,11 @@ class BaseUserSerializer(serializers.ModelSerializer):
         return user
     
 class PatientRegistrationSerializer(BaseUserSerializer):
-    date_of_birth = serializers.DateField()
-    gender = serializers.CharField(max_length=10)
-    address = serializers.CharField()
-    emergency_contact = serializers.CharField(max_length=100)
-    age = serializers.CharField(max_length=5)
+    date_of_birth = serializers.DateField(required=False, allow_null=True)
+    gender = serializers.CharField(max_length=10,required=False, allow_blank=True)
+    address = serializers.CharField(required=False, allow_blank=True)
+    emergency_contact = serializers.CharField(max_length=100,required=False, allow_blank=True)
+    age = serializers.CharField(max_length=5,required=False, allow_blank=True)
     insurance_provider = serializers.CharField(max_length=100, required=False, allow_blank=True)
     insurance_id = serializers.CharField(max_length=50, required=False, allow_blank=True)
     country = serializers.CharField(max_length=55, required=False, allow_blank=True)
@@ -195,10 +195,10 @@ class PatientRegistrationSerializer(BaseUserSerializer):
         return user    
 
 class CardiologistRegistrationSerializer(BaseUserSerializer):
-    date_of_birth = serializers.DateField()
-    gender = serializers.CharField(max_length=10)
-    address = serializers.CharField()
-    emergency_contact = serializers.CharField(max_length=100)
+    date_of_birth = serializers.DateField(required=False, allow_null=True)
+    gender = serializers.CharField(max_length=10,required=False, allow_blank=True)
+    address = serializers.CharField(required=False, allow_blank=True)
+    emergency_contact = serializers.CharField(max_length=100,required=False, allow_blank=True)
     specialization = serializers.CharField(required=False, allow_blank=True)
     experience = serializers.IntegerField(required=False, allow_null=True)
     availability = serializers.CharField(required=False, allow_blank=True)
@@ -253,7 +253,7 @@ class AdministrativeStaffRegistrationSerializer(BaseUserSerializer):
             'shift': validated_data.pop('shift', ''),
             'extension_number': validated_data.pop('extension_number', ''),
             'office_location': validated_data.pop('office_location', ''),
-            'age': validated_data.pop('age', ''),
+            'age': validated_data.pop('age', '0'),
         }
 
         user = self.create_user(validated_data, role='Administrative Staff')
@@ -356,3 +356,165 @@ class AllUsersProfileSerializer(serializers.ModelSerializer):
         if obj.role == 'Administrative Staff' and hasattr(obj, 'administrativestaffprofile'):
             return AdminStaffProfileSerializer(obj.administrativestaffprofile).data
         return None    
+
+# Profile Update Serializers for editing user profiles
+class BaseProfileUpdateSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
+    phone = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta:
+        model = ProfileUser
+        fields = ['first_name', 'last_name', 'phone']
+
+    def update(self, instance, validated_data):
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.phone = validated_data.get('phone', instance.phone)
+        instance.save()
+        return instance
+
+class PatientProfileUpdateSerializer(BaseProfileUpdateSerializer):
+    date_of_birth = serializers.DateField(required=False, allow_null=True)
+    gender = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    address = serializers.CharField(required=False, allow_blank=True)
+    emergency_contact = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    age = serializers.IntegerField(required=False, allow_null=True)
+    insurance_provider = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    insurance_id = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    country = serializers.CharField(max_length=55, required=False, allow_blank=True)
+
+    class Meta(BaseProfileUpdateSerializer.Meta):
+        fields = BaseProfileUpdateSerializer.Meta.fields + [
+            'date_of_birth', 'gender', 'address', 'emergency_contact',
+            'insurance_provider', 'insurance_id', 'country', 'age'
+        ]
+
+    def update(self, instance, validated_data):
+        # Update user fields
+        instance = super().update(instance, validated_data)
+        
+        # Update patient profile fields
+        patient_profile = getattr(instance, 'patientprofile', None)
+        if patient_profile:
+            patient_fields = [
+                'date_of_birth', 'gender', 'address', 'emergency_contact',
+                'insurance_provider', 'insurance_id', 'country', 'age'
+            ]
+            for field in patient_fields:
+                if field in validated_data:
+                    setattr(patient_profile, field, validated_data[field])
+            patient_profile.save()
+        
+        return instance
+
+class DoctorProfileUpdateSerializer(BaseProfileUpdateSerializer):
+    date_of_birth = serializers.DateField(required=False, allow_null=True)
+    gender = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    address = serializers.CharField(required=False, allow_blank=True)
+    emergency_contact = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    specialization = serializers.CharField(required=False, allow_blank=True)
+    experience = serializers.IntegerField(required=False, allow_null=True)
+    availability = serializers.CharField(required=False, allow_blank=True)
+    fees = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
+    is_available = serializers.BooleanField(required=False)
+
+    class Meta(BaseProfileUpdateSerializer.Meta):
+        fields = BaseProfileUpdateSerializer.Meta.fields + [
+            'date_of_birth', 'gender', 'address', 'emergency_contact',
+            'specialization', 'experience', 'availability', 'fees', 'is_available'
+        ]
+
+    def update(self, instance, validated_data):
+        # Update user fields
+        instance = super().update(instance, validated_data)
+        
+        # Update doctor profile fields
+        doctor_profile = getattr(instance, 'doctorprofile', None)
+        if doctor_profile:
+            doctor_fields = [
+                'date_of_birth', 'gender', 'address', 'emergency_contact',
+                'specialization', 'experience', 'availability', 'fees', 'is_available'
+            ]
+            for field in doctor_fields:
+                if field in validated_data:
+                    setattr(doctor_profile, field, validated_data[field])
+            doctor_profile.save()
+        
+        return instance
+
+class NurseProfileUpdateSerializer(BaseProfileUpdateSerializer):
+    department = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    shift = serializers.CharField(max_length=50, required=False, allow_blank=True)
+
+    class Meta(BaseProfileUpdateSerializer.Meta):
+        fields = BaseProfileUpdateSerializer.Meta.fields + ['department', 'shift']
+
+    def update(self, instance, validated_data):
+        # Update user fields
+        instance = super().update(instance, validated_data)
+        
+        # Update nurse profile fields
+        nurse_profile = getattr(instance, 'nurseprofile', None)
+        if nurse_profile:
+            nurse_fields = ['department', 'shift']
+            for field in nurse_fields:
+                if field in validated_data:
+                    setattr(nurse_profile, field, validated_data[field])
+            nurse_profile.save()
+        
+        return instance
+
+class SonographerProfileUpdateSerializer(BaseProfileUpdateSerializer):
+    certification = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+    class Meta(BaseProfileUpdateSerializer.Meta):
+        fields = BaseProfileUpdateSerializer.Meta.fields + ['certification']
+
+    def update(self, instance, validated_data):
+        # Update user fields
+        instance = super().update(instance, validated_data)
+        
+        # Update sonographer profile fields
+        sonographer_profile = getattr(instance, 'sonographerprofile', None)
+        if sonographer_profile:
+            if 'certification' in validated_data:
+                sonographer_profile.certification = validated_data['certification']
+            sonographer_profile.save()
+        
+        return instance
+
+class AdministrativeStaffProfileUpdateSerializer(BaseProfileUpdateSerializer):
+    gender = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    address = serializers.CharField(required=False, allow_blank=True)
+    department = serializers.CharField(required=False, allow_blank=True)
+    working_hours = serializers.CharField(required=False, allow_blank=True)
+    job_title = serializers.CharField(required=False, allow_blank=True)
+    shift = serializers.CharField(required=False, allow_blank=True)
+    extension_number = serializers.CharField(required=False, allow_blank=True)
+    office_location = serializers.CharField(required=False, allow_blank=True)
+    age = serializers.IntegerField(required=False, allow_null=True)
+
+    class Meta(BaseProfileUpdateSerializer.Meta):
+        fields = BaseProfileUpdateSerializer.Meta.fields + [
+            'gender', 'address', 'department', 'working_hours',
+            'job_title', 'shift', 'extension_number', 'office_location', 'age'
+        ]
+
+    def update(self, instance, validated_data):
+        # Update user fields
+        instance = super().update(instance, validated_data)
+        
+        # Update administrative staff profile fields
+        admin_staff_profile = getattr(instance, 'administrativestaffprofile', None)
+        if admin_staff_profile:
+            admin_fields = [
+                'gender', 'address', 'department', 'working_hours',
+                'job_title', 'shift', 'extension_number', 'office_location', 'age'
+            ]
+            for field in admin_fields:
+                if field in validated_data:
+                    setattr(admin_staff_profile, field, validated_data[field])
+            admin_staff_profile.save()
+        
+        return instance    

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from heart_flow_app.models import *
-from  patient_app.serializers import *
+from  patient_app.serializers import ProfileUserSerializer
 
 class AppointmentListSerializer(serializers.ModelSerializer):
     patient_name = serializers.SerializerMethodField()

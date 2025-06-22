@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axiosInstance from '../config/axiosInstance';
+import ProfileApis from '../apis/ProfileApis';
 
 const useUserProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -9,12 +9,12 @@ const useUserProfile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get('/get-all-user-profile/');
-      if (response.data.status) {
-        setProfile(response.data.data);
+      const response = await ProfileApis.getUserProfile();
+      if (response.status) {
+        setProfile(response.data);
         setError(null);
       } else {
-        setError(response.data.message);
+        setError(response.message);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch profile');

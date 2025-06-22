@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from . manager import CustomUserManager
 
 
+
 class ProfileUser(AbstractUser):
     ROLE_CHOICES = [
         ('Admin', 'Admin'),
@@ -22,6 +23,7 @@ class ProfileUser(AbstractUser):
     otp_secret = models.CharField(max_length=32, null=True, blank=True)
     phone = models.CharField(max_length=20, blank=True)
     is_verified = models.BooleanField(default=False)
+    user_images = models.ImageField(upload_to='user_photos/',null=True , blank=True)
     USERNAME_FIELD = 'email'  # Important
     REQUIRED_FIELDS = []  # Since email is the only required field
 
@@ -38,28 +40,46 @@ class ProfileUser(AbstractUser):
     def __str__(self):
         return self.email
 
+class Medication(models.Model):
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=50, unique=True)
+    description = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.name
+
+class DrugInteraction(models.Model):
+    medication_1 = models.ForeignKey(Medication, related_name='interaction_from', on_delete=models.CASCADE)
+    medication_2 = models.ForeignKey(Medication, related_name='interaction_to', on_delete=models.CASCADE)
+    severity = models.CharField(max_length=20, choices=[('Low', 'Low'), ('Moderate', 'Moderate'), ('High', 'High')])
+    description = models.TextField()
+
+class Allergy(models.Model):
+    name = models.CharField(max_length=100)
+    medications = models.ManyToManyField(Medication)
 class PatientProfile(models.Model):
     user = models.OneToOneField(ProfileUser, on_delete=models.CASCADE, limit_choices_to={'role': 'Patient'})
-    date_of_birth = models.DateField()
-    gender = models.CharField(max_length=10)
-    address = models.TextField()
-    emergency_contact = models.CharField(max_length=100)
+    date_of_birth = models.DateField(null=True , blank = True)
+    gender = models.CharField(max_length=10,null=True,blank=True)
+    address = models.TextField(null=True,blank=True)
+    emergency_contact = models.CharField(max_length=100,null=True,blank=True)
     insurance_provider = models.CharField(max_length=100, blank=True, null=True)
     insurance_id = models.CharField(max_length=50, blank=True, null=True)
-    country = models.CharField(max_length=55)
+    country = models.CharField(max_length=55,null=True,blank=True)
     unique_id = models.CharField(max_length=20 ,unique=True,null=True ,blank=True)
-    age = models.PositiveIntegerField(null=True ,blank=True)
+    age = models.IntegerField(null=True,blank=True)
+    allergies = models.ManyToManyField(Allergy, blank=True)
+    medical_reference_no = models.CharField(max_length=50,null=True,blank=True)
 
     def __str__(self):
         return f"{self.user.first_name}-{self.user.last_name}"
 
 class DoctorProfile(models.Model):
     user = models.OneToOneField(ProfileUser, on_delete=models.CASCADE, limit_choices_to={'role': 'Cardiologist'})
-    date_of_birth = models.DateField()
-    gender = models.CharField(max_length=10)
-    address = models.TextField()
-    emergency_contact = models.CharField(max_length=100)
+    date_of_birth = models.DateField(null=True,blank=True)
+    gender = models.CharField(max_length=10,null=True,blank=True)
+    address = models.TextField(null=True,blank=True)
+    emergency_contact = models.CharField(max_length=100,null=True,blank=True)
     specialization = models.CharField(max_length=100,null=True,blank=True)
     experience = models.IntegerField(null=True,blank=True)
     availability = models.CharField(max_length=100,null=True,blank=True)
@@ -72,17 +92,30 @@ class DoctorProfile(models.Model):
         return f"{self.user.first_name}-{self.user.last_name}"
     
 
+
+class Prescription(models.Model):
+    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE)
+    prescribed_by = models.ForeignKey(ProfileUser, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class PrescriptionItem(models.Model):
+    prescription = models.ForeignKey(Prescription, related_name='items', on_delete=models.CASCADE)
+    medication = models.ForeignKey(Medication, on_delete=models.CASCADE)
+    dosage = models.CharField(max_length=100)
+    frequency = models.CharField(max_length=100)
+    duration = models.CharField(max_length=100)    
+
 class NurseProfile(models.Model):
     user = models.OneToOneField(ProfileUser, on_delete=models.CASCADE, limit_choices_to={'role': 'Nurse'})
-    department = models.CharField(max_length=100)
-    shift = models.CharField(max_length=50)
+    department = models.CharField(max_length=100,null=True,blank=True)
+    shift = models.CharField(max_length=50,null=True,blank=True)
 
     def __str__(self):
         return f"{self.user.first_name}-{self.user.last_name}"
 
 class SonographerProfile(models.Model):
     user = models.OneToOneField(ProfileUser, on_delete=models.CASCADE, limit_choices_to={'role': 'Sonographer'})
-    certification = models.CharField(max_length=100)
+    certification = models.CharField(max_length=100,null=True,blank=True)
 
     def __str__(self):
         return f"{self.user.first_name}-{self.user.last_name}"

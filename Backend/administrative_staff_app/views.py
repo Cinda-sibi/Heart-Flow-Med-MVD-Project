@@ -13,6 +13,7 @@ from doctor_app.serializers import *
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 # add patients
@@ -27,28 +28,45 @@ class AddPatientView(APIView):
             return custom_200("Patient registered successfully")
         return custom_404(serializer.errors)
 
-
+# create doctor availability
 class DoctorAvailabilityListCreate(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         availability = DoctorAvailability.objects.all()
         serializer = DoctorAvailabilitySerializer(availability, many=True)
-        return custom_200("Availability listed successfully",serializer.data)
+        return custom_200("Availability listed successfully", serializer.data)
 
     def post(self, request):
-        serializer = DoctorAvailabilitySerializer(data=request.data)
+        data = request.data.copy()
+        # If doctor_id is not provided, assume the logged-in user is the doctor
+        if not data.get('doctor'):
+            # Assuming the user is a doctor and has a related Doctor profile
+            try:
+                doctor_profile  = DoctorProfile.objects.get(user=request.user)
+                data['doctor'] = doctor_profile .user.id
+            except DoctorProfile.DoesNotExist:
+                return custom_404({"doctor": "Doctor profile not found for the logged-in user."})
+        serializer = DoctorAvailabilitySerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            return custom_200("Availability created",serializer.data)
+            return custom_200("Availability created", serializer.data)
         return custom_404(serializer.errors)
 
-
+# create doctor leave 
 class DoctorLeaveCreate(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = DoctorLeaveSerializer(data=request.data)
+        data = request.data.copy()
+        # If doctor_id is not provided, assume the logged-in user is the doctor
+        if not data.get('doctor'):
+            try:
+                doctor = DoctorProfile.objects.get(user=request.user)
+                data['doctor'] = doctor.id
+            except DoctorProfile.DoesNotExist:
+                return custom_404({"doctor": "Doctor profile not found for the logged-in user."})
+        serializer = DoctorLeaveSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return custom_200("Leave created", serializer.data)
@@ -56,7 +74,7 @@ class DoctorLeaveCreate(APIView):
 
 
 
-
+# check doctor avialbility 
 class CheckDoctorAvailability(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -150,3 +168,12 @@ class SearchDoctorAvailabilityAPIView(APIView):
 
         serializer = DoctorAvailabilitySerializer(availabilities, many=True)
         return custom_200("Doctor availability found", serializer.data)
+
+
+# get single patients details by id
+class PatientDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, patient_id):
+        patient = get_object_or_404(PatientProfile, id=patient_id)
+        serializer = ListallPatientsSerializer(patient)
+        return custom_200("patient profile get successfully",serializer.data)

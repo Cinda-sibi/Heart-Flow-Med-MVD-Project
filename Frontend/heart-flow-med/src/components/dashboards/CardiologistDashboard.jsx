@@ -9,7 +9,7 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
-import { fetchAllPatients } from '../../apis/DoctorDashboardApis';
+import { fetchAllPatients, fetchTodaysAppointments, fetchDoctorPatientCount, fetchDoctorTodaysAppointmentsCount } from '../../apis/DoctorDashboardApis';
 
 const CardiologistDashboard = () => {
   const [stats, setStats] = useState({
@@ -26,22 +26,46 @@ const CardiologistDashboard = () => {
     // Fetch dashboard data
     fetchDashboardData();
     fetchRecentPatients();
+    fetchTodaysAppointmentsData();
   }, []);
 
   const fetchDashboardData = async () => {
-    // Mock data - replace with actual API calls
-    setStats({
-      totalPatients: 347,
-      todayAppointments: 12,
-      pendingResults: 8,
-      urgentCases: 3
-    });
+    try {
+      const [patientCountRes, todaysAppointmentsCountRes] = await Promise.all([
+        fetchDoctorPatientCount(),
+        fetchDoctorTodaysAppointmentsCount()
+      ]);
+      setStats((prev) => ({
+        ...prev,
+        totalPatients: (patientCountRes.data && patientCountRes.data.patient_count) || 0,
+        todayAppointments: (todaysAppointmentsCountRes.data && (todaysAppointmentsCountRes.data.todays_appointments_count || todaysAppointmentsCountRes.data.patient_count || todaysAppointmentsCountRes.data.count)) || 0,
+      }));
+    } catch (error) {
+      setStats((prev) => ({
+        ...prev,
+        totalPatients: 0,
+        todayAppointments: 0,
+      }));
+    }
+  };
 
-    setUpcomingAppointments([
-      { id: 1, time: '09:00', patient: 'Sarah Wilson', type: 'Follow-up', status: 'confirmed' },
-      { id: 2, time: '10:30', patient: 'Michael Davis', type: 'Consultation', status: 'pending' },
-      { id: 3, time: '14:00', patient: 'Lisa Anderson', type: 'ECG Review', status: 'confirmed' },
-    ]);
+  // Fetch today's appointments from API
+  const fetchTodaysAppointmentsData = async () => {
+    try {
+      const response = await fetchTodaysAppointments();
+      // response.data is the array of appointments
+      const appointments = (response.data || []).map((a) => ({
+        id: a.id,
+        time: a.time || '',
+        patient: a.patient_name || '',
+        type: a.type || '',
+        status: a.status || '',
+      }));
+      setUpcomingAppointments(appointments);
+    } catch (error) {
+      setUpcomingAppointments([]);
+      // Optionally handle error (e.g., show notification)
+    }
   };
 
   // Fetch recent patients from API
@@ -144,34 +168,38 @@ const CardiologistDashboard = () => {
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              {upcomingAppointments.map((appointment) => (
-                <div key={appointment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                      <Clock className="h-5 w-5 text-blue-600" />
+              {upcomingAppointments.length === 0 ? (
+                <div className="text-center text-gray-500">No appointments found</div>
+              ) : (
+                upcomingAppointments.map((appointment) => (
+                  <div key={appointment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+                        <Clock className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-900">{appointment.patient}</h3>
+                        <p className="text-sm text-gray-600">{appointment.type}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{appointment.patient}</h3>
-                      <p className="text-sm text-gray-600">{appointment.type}</p>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">{appointment.time}</p>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        appointment.status === 'confirmed' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {appointment.status === 'confirmed' ? (
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                        ) : (
+                          <Clock className="w-3 h-3 mr-1" />
+                        )}
+                        {appointment.status}
+                      </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">{appointment.time}</p>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      appointment.status === 'confirmed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {appointment.status === 'confirmed' ? (
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                      ) : (
-                        <Clock className="w-3 h-3 mr-1" />
-                      )}
-                      {appointment.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

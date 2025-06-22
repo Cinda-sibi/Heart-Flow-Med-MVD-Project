@@ -45,6 +45,11 @@ export const cancelAppointment = async (appointmentId) => {
 };
 
 export const searchPatient = async (params) => {
-  // params: { first_name, last_name, unique_id }
+  // params: { name }
   return await axiosInstance.get('/search-patient/', { params });
+};
+
+export const getPatientById = async (patientId) => {
+  const response = await axiosInstance.get(`/get-patient-by-id/${patientId}/`);
+  return response.data;
 };

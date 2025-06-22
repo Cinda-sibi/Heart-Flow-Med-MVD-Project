@@ -242,19 +242,16 @@ class SearchPatientAPIView(APIView):
 
     def get(self, request):
         unique_id = request.query_params.get('unique_id')
-        first_name = request.query_params.get('first_name')
-        last_name = request.query_params.get('last_name')
+        name = request.query_params.get('name')
 
         filters = Q(role='Patient')
         if unique_id:
             filters &= Q(patientprofile__unique_id=unique_id)
-        if first_name:
-            filters &= Q(first_name__icontains=first_name)
-        if last_name:
-            filters &= Q(last_name__icontains=last_name)
+        if name:
+            filters &= Q(first_name__icontains=name) | Q(last_name__icontains=name)
 
-        if not (unique_id or first_name or last_name):
-            return custom_404("At least one search parameter (unique_id, first_name, last_name) is required")
+        if not (unique_id or name):
+            return custom_404("At least one search parameter (unique_id, name) is required")
 
         patients = ProfileUser.objects.select_related('patientprofile').filter(filters)
         if not patients.exists():
@@ -262,11 +259,10 @@ class SearchPatientAPIView(APIView):
 
         response_data = []
         for patient in patients:
-            # patient is a ProfileUser instance, not a dict
             patient_profile = getattr(patient, 'patientprofile', None)
             formatted_patient = {
                 "id": patient.id,
-                "user_id": patient.id,  # ProfileUser is the user
+                "user_id": patient.id,
                 "unique_id": patient_profile.unique_id if patient_profile else None,
                 "email": patient.email,
                 "first_name": patient.first_name,
@@ -282,24 +278,22 @@ class SearchPatientAPIView(APIView):
         return custom_200("Patients retrieved successfully", response_data)
 
 
+
 class SearchDoctorAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        first_name = request.query_params.get('first_name')
-        last_name = request.query_params.get('last_name')
+        name = request.query_params.get('name')
         specialization = request.query_params.get('specialization')
 
         filters = Q(role='Cardiologist')
-        if first_name:
-            filters &= Q(first_name__icontains=first_name)
-        if last_name:
-            filters &= Q(last_name__icontains=last_name)
+        if name:
+            filters &= Q(first_name__icontains=name) | Q(last_name__icontains=name)
         if specialization:
             filters &= Q(doctor_profile__specialization__icontains=specialization)
 
-        if not (first_name or last_name or specialization):
-            return custom_404("At least one search parameter (first_name, last_name, specialization) is required")
+        if not (name or specialization):
+            return custom_404("At least one search parameter (name or specialization) is required")
 
         doctors = ProfileUser.objects.filter(filters)
         if not doctors.exists():
@@ -308,24 +302,56 @@ class SearchDoctorAPIView(APIView):
         serializer = ListallDcotorsSerializer(doctors, many=True)
         response_data = []
         for doctor in serializer.data:
-                formatted_doctor = {
-                    "id": doctor["id"],
-                    "user_id":doctor["user"]["id"],
-                    "email": doctor["user"]["email"],
-                    "first_name": doctor["user"]["first_name"],
-                    "last_name": doctor["user"]["last_name"],
-                    "role": doctor["user"]["role"],
-                    "is_verified": doctor["user"]["is_verified"],
-                    "specialization": doctor["specialization"],
-                    "experience": doctor["experience"],
-                    "availability": doctor["availability"],
-                    "fees": doctor["fees"],
-                    "is_available": doctor["is_available"],
-                    "date_of_birth": doctor["date_of_birth"],
-                    "gender": doctor["gender"],
-                    "address": doctor["address"],
-                    "emergency_contact": doctor["emergency_contact"]
-                }
-                response_data.append(formatted_doctor)
+            formatted_doctor = {
+                "id": doctor["id"],
+                "user_id": doctor["user"]["id"],
+                "email": doctor["user"]["email"],
+                "first_name": doctor["user"]["first_name"],
+                "last_name": doctor["user"]["last_name"],
+                "role": doctor["user"]["role"],
+                "is_verified": doctor["user"]["is_verified"],
+                "specialization": doctor["specialization"],
+                "experience": doctor["experience"],
+                "availability": doctor["availability"],
+                "fees": doctor["fees"],
+                "is_available": doctor["is_available"],
+                "date_of_birth": doctor["date_of_birth"],
+                "gender": doctor["gender"],
+                "address": doctor["address"],
+                "emergency_contact": doctor["emergency_contact"]
+            }
+            response_data.append(formatted_doctor)
 
         return custom_200("Doctors found", response_data)
+
+# Update user profile based on role
+class UpdateUserProfileAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        user = request.user
+        
+        # Get the appropriate serializer based on user role
+        if user.role == 'Patient':
+            serializer = PatientProfileUpdateSerializer(user, data=request.data, partial=True)
+        elif user.role == 'Cardiologist':
+            serializer = DoctorProfileUpdateSerializer(user, data=request.data, partial=True)
+        elif user.role == 'Nurse':
+            serializer = NurseProfileUpdateSerializer(user, data=request.data, partial=True)
+        elif user.role == 'Sonographer':
+            serializer = SonographerProfileUpdateSerializer(user, data=request.data, partial=True)
+        elif user.role == 'Administrative Staff':
+            serializer = AdministrativeStaffProfileUpdateSerializer(user, data=request.data, partial=True)
+        else:
+            return custom_404("Profile update not supported for this role")
+
+        if serializer.is_valid():
+            updated_user = serializer.save()
+            
+            # Get updated profile data
+            profile_serializer = AllUsersProfileSerializer(updated_user)
+            
+            return custom_200("Profile updated successfully", profile_serializer.data)
+        
+        return custom_404(serializer.errors)
+

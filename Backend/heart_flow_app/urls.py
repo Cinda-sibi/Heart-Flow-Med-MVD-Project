@@ -10,6 +10,7 @@ urlpatterns = [
     # path('cardiologist-registration/',CardiologistRegisterView.as_view(),name='cardiologist-registration'),
     # path('administrative-staff/',AdministrativeStaffRegistration.as_view(),name='administrative-staff'),
     path('get-all-user-profile/',GetUsersProfile.as_view(),name='get-all-user-profile'),
+    path('update-user-profile/',UpdateUserProfileAPIView.as_view(),name='update-user-profile'),
 
     # search
 
