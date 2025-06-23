@@ -116,12 +116,12 @@ const Profile = () => {
                     <input
                       type="text"
                       name="specialization"
-                      value={form.specialization || ''}
-                      onChange={handleRoleSpecificChange}
+                      value={form.profile?.specialization || ''}
+                      onChange={e => setForm(prev => ({ ...prev, profile: { ...prev.profile, specialization: e.target.value } }))}
                       className="border rounded px-2 py-1 w-full"
                     />
                   ) : (
-                    <p className="font-medium">{form.specialization}</p>
+                    <p className="font-medium">{form.profile?.specialization || 'Not specified'}</p>
                   )}
                 </div>
               </div>
@@ -133,12 +133,12 @@ const Profile = () => {
                     <input
                       type="number"
                       name="experience"
-                      value={form.experience || ''}
-                      onChange={handleRoleSpecificChange}
+                      value={form.profile?.experience || ''}
+                      onChange={e => setForm(prev => ({ ...prev, profile: { ...prev.profile, experience: e.target.value } }))}
                       className="border rounded px-2 py-1 w-full"
                     />
                   ) : (
-                    <p className="font-medium">{form.experience} years</p>
+                    <p className="font-medium">{form.profile?.experience ? `${form.profile.experience} years` : 'Not specified'}</p>
                   )}
                 </div>
               </div>
@@ -150,12 +150,12 @@ const Profile = () => {
                     <input
                       type="number"
                       name="fees"
-                      value={form.fees || ''}
-                      onChange={handleRoleSpecificChange}
+                      value={form.profile?.fees || ''}
+                      onChange={e => setForm(prev => ({ ...prev, profile: { ...prev.profile, fees: e.target.value } }))}
                       className="border rounded px-2 py-1 w-full"
                     />
                   ) : (
-                    <p className="font-medium">${form.fees}</p>
+                    <p className="font-medium">{form.profile?.fees ? `$${form.profile.fees}` : 'Not specified'}</p>
                   )}
                 </div>
               </div>
@@ -336,12 +336,12 @@ const Profile = () => {
                     <input
                       type="date"
                       name="date_of_birth"
-                      value={form.date_of_birth || ''}
-                      onChange={handleChange}
+                      value={form.profile?.date_of_birth || ''}
+                      onChange={e => setForm(prev => ({ ...prev, profile: { ...prev.profile, date_of_birth: e.target.value } }))}
                       className="border rounded px-2 py-1 w-full"
                     />
                   ) : (
-                    <p className="font-medium">{form?.date_of_birth || 'Not specified'}</p>
+                    <p className="font-medium">{form.profile?.date_of_birth || 'Not specified'}</p>
                   )}
                 </div>
               </div>
@@ -353,12 +353,12 @@ const Profile = () => {
                     <input
                       type="text"
                       name="address"
-                      value={form.address || ''}
-                      onChange={handleChange}
+                      value={form.profile?.address || ''}
+                      onChange={e => setForm(prev => ({ ...prev, profile: { ...prev.profile, address: e.target.value } }))}
                       className="border rounded px-2 py-1 w-full"
                     />
                   ) : (
-                    <p className="font-medium">{form?.address || 'Not specified'}</p>
+                    <p className="font-medium">{form.profile?.address || 'Not specified'}</p>
                   )}
                 </div>
               </div>

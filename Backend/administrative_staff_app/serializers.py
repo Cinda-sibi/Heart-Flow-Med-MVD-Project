@@ -3,8 +3,7 @@ from .models import *
 
 class DoctorAvailabilitySerializer(serializers.ModelSerializer):
     doctor_full_name = serializers.SerializerMethodField(read_only=True)
-    start_time = serializers.SerializerMethodField()
-    end_time = serializers.SerializerMethodField()
+
     class Meta:
         model = DoctorAvailability
         fields = '__all__'
@@ -13,12 +12,12 @@ class DoctorAvailabilitySerializer(serializers.ModelSerializer):
     def get_doctor_full_name(self, obj):
         return f"{obj.doctor.first_name} {obj.doctor.last_name}"
     
-    def get_start_time(self, obj):
-        # Format time to 12-hour format with AM/PM
-        return obj.start_time.strftime('%I:%M %p') 
-    def get_end_time(self, obj):
-        # Format time to 12-hour format with AM/PM
-        return obj.end_time.strftime('%I:%M %p') 
+    def to_representation(self, instance):
+        """ Format start_time and end_time as 12-hour AM/PM in the output """
+        rep = super().to_representation(instance)
+        rep['start_time'] = instance.start_time.strftime('%I:%M %p') if instance.start_time else None
+        rep['end_time'] = instance.end_time.strftime('%I:%M %p') if instance.end_time else None
+        return rep
 
 
 

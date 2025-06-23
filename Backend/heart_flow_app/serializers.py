@@ -325,40 +325,60 @@ class AdminStaffProfileSerializer(serializers.ModelSerializer):
         model = AdministrativeStaffProfile
         fields = '__all__'
 
+# class AllUsersProfileSerializer(serializers.ModelSerializer):
+#     patient_profile = serializers.SerializerMethodField()
+#     doctor_profile = serializers.SerializerMethodField()
+#     nurse_profile = serializers.SerializerMethodField()
+#     sonographer_profile = serializers.SerializerMethodField()
+#     admin_staff_profile = serializers.SerializerMethodField()
+#     class Meta:
+#         model = ProfileUser
+#         fields = ['id','role','first_name','last_name','email','phone','patient_profile','doctor_profile','nurse_profile','sonographer_profile','admin_staff_profile']
+
+#     def get_patient_profile(self, obj):
+#         if obj.role == 'Patient' and hasattr(obj, 'patientprofile'):
+#             return PatientProfileSerializer(obj.patientprofile).data
+#         return None
+
+#     def get_doctor_profile(self, obj):
+#         if obj.role == 'Cardiologist' and hasattr(obj, 'doctorprofile'):
+#             return DoctorProfileSerializer(obj.doctorprofile).data
+#         return None
+
+#     def get_nurse_profile(self, obj):
+#         if obj.role == 'Nurse' and hasattr(obj, 'nurseprofile'):
+#             return NurseProfileSerializer(obj.nurseprofile).data
+#         return None
+
+#     def get_sonographer_profile(self, obj):
+#         if obj.role == 'Sonographer' and hasattr(obj, 'sonographerprofile'):
+#             return SonographerProfileSerializer(obj.sonographerprofile).data
+#         return None
+
+#     def get_admin_staff_profile(self, obj):
+#         if obj.role == 'Administrative Staff' and hasattr(obj, 'administrativestaffprofile'):
+#             return AdminStaffProfileSerializer(obj.administrativestaffprofile).data
+#         return None    
+
 class AllUsersProfileSerializer(serializers.ModelSerializer):
-    patient_profile = serializers.SerializerMethodField()
-    doctor_profile = serializers.SerializerMethodField()
-    nurse_profile = serializers.SerializerMethodField()
-    sonographer_profile = serializers.SerializerMethodField()
-    admin_staff_profile = serializers.SerializerMethodField()
+    profile = serializers.SerializerMethodField()
+
     class Meta:
         model = ProfileUser
-        fields = ['id','role','first_name','last_name','phone','patient_profile','doctor_profile','nurse_profile','sonographer_profile','admin_staff_profile']
+        fields = ['id', 'role', 'first_name', 'last_name', 'email', 'phone', 'profile']
 
-    def get_patient_profile(self, obj):
+    def get_profile(self, obj):
         if obj.role == 'Patient' and hasattr(obj, 'patientprofile'):
             return PatientProfileSerializer(obj.patientprofile).data
-        return None
-
-    def get_doctor_profile(self, obj):
-        if obj.role == 'Cardiologist' and hasattr(obj, 'doctorprofile'):
+        elif obj.role == 'Cardiologist' and hasattr(obj, 'doctorprofile'):
             return DoctorProfileSerializer(obj.doctorprofile).data
-        return None
-
-    def get_nurse_profile(self, obj):
-        if obj.role == 'Nurse' and hasattr(obj, 'nurseprofile'):
+        elif obj.role == 'Nurse' and hasattr(obj, 'nurseprofile'):
             return NurseProfileSerializer(obj.nurseprofile).data
-        return None
-
-    def get_sonographer_profile(self, obj):
-        if obj.role == 'Sonographer' and hasattr(obj, 'sonographerprofile'):
+        elif obj.role == 'Sonographer' and hasattr(obj, 'sonographerprofile'):
             return SonographerProfileSerializer(obj.sonographerprofile).data
-        return None
-
-    def get_admin_staff_profile(self, obj):
-        if obj.role == 'Administrative Staff' and hasattr(obj, 'administrativestaffprofile'):
+        elif obj.role == 'Administrative Staff' and hasattr(obj, 'administrativestaffprofile'):
             return AdminStaffProfileSerializer(obj.administrativestaffprofile).data
-        return None    
+        return None
 
 # Profile Update Serializers for editing user profiles
 class BaseProfileUpdateSerializer(serializers.ModelSerializer):

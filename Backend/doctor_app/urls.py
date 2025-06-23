@@ -17,5 +17,8 @@ urlpatterns = [
     path('list-sonographers/',SonographerListAPIView.as_view(),name='list-sonographers'),
     path('sonography-referral/', SonographyReferralView.as_view(), name='sonography-referral'),
     path('sonography-referral-upload-report/<int:pk>/', SonographyReportUploadView.as_view(), name='sonography-referral-upload-report'),
+    
+
+    path('appointments-prescribe/<int:appointment_id>/', WritePrescriptionAPIView.as_view(), name='write-prescription'),
 
 ]

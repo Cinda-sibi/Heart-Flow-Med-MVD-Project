@@ -42,8 +42,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
           { name: 'My Patients', href: '/my-patients', icon: Users },
           { name: 'Create Doctors Availability', href: '/create-doctors-availability', icon: ActivityIcon },
           { name: 'My Appointments', href: '/doctor-appointments', icon: Calendar },
-          { name: 'Medical Records', href: '/records', icon: FileText },
+          // { name: 'Medical Records', href: '/records', icon: FileText },
           { name: 'Assign Sonographers', href: '/assign-sonographers', icon: ClipboardList },
+          // { name: 'Medical Records', href: '/records', icon: FileText },
         ];
       case 'Nurse':
         return [

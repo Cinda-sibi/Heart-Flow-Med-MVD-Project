@@ -72,3 +72,24 @@ class SonographyReferralReportSerializer(serializers.ModelSerializer):
         model = SonographyReferral
         fields = ['id', 'report', 'status']
         read_only_fields = ['id']
+
+
+class PrescriptionItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrescriptionItem
+        fields = ['medication', 'dosage', 'frequency', 'duration']
+
+class PrescriptionSerializer(serializers.ModelSerializer):
+    items = PrescriptionItemSerializer(many=True)
+
+    class Meta:
+        model = Prescription
+        fields = ['id', 'patient', 'prescribed_by', 'created_at', 'items']
+        read_only_fields = ['patient', 'prescribed_by', 'created_at']
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        prescription = Prescription.objects.create(**validated_data)
+        for item in items_data:
+            PrescriptionItem.objects.create(prescription=prescription, **item)
+        return prescription

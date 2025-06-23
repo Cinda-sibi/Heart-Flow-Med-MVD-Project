@@ -134,10 +134,10 @@ const PatientsReferral = () => {
   return (
     <div className="p-2 sm:p-6 md:p-10 space-y-12 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="mb-2">
+      {/* <div className="mb-2">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Patient Referral</h1>
         <p className="text-gray-600 text-lg">Refer patients and view your referral history.</p>
-      </div>
+      </div> */}
 
       {/* Referral Form Card */}
       <div className="max-w-3xl mx-auto">

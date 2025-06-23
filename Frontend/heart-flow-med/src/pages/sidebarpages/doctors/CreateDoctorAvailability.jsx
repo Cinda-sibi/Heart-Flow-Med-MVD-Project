@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createDoctorAvailability, createDoctorLeave } from '../../../apis/DoctorDashboardApis';
 import { getAllDoctors } from '../../../apis/AdministrativeStaffDashboardApis';
+import { Calendar, Sun } from 'lucide-react';
 
 const daysOfWeek = [
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
@@ -27,7 +28,6 @@ const CreateDoctorAvailability = () => {
     const fetchDoctors = async () => {
       try {
         const data = await getAllDoctors();
-        // If the response is wrapped (e.g., { message, data }), extract data
         let doctorsArray = data;
         if (data && typeof data === 'object' && Array.isArray(data.data)) {
           doctorsArray = data.data;
@@ -89,128 +89,145 @@ const CreateDoctorAvailability = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded shadow mt-8">
-      <h2 className="text-2xl font-bold mb-4">Create Doctor Availability</h2>
-      <form onSubmit={handleAvailabilitySubmit} className="space-y-4 mb-8">
-        <div>
-          <label className="block mb-1 font-medium">Doctor</label>
-          <select
-            name="doctor"
-            value={availabilityForm.doctor}
-            onChange={handleAvailabilityChange}
-            className="w-full border rounded px-3 py-2"
-            required
-          >
-            <option value="">Select Doctor</option>
-            {doctors.map((doc) => (
-              <option key={doc.user_id} value={doc.user_id}>
-                {doc.first_name} {doc.last_name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Day of Week</label>
-          <select
-            name="day_of_week"
-            value={availabilityForm.day_of_week}
-            onChange={handleAvailabilityChange}
-            className="w-full border rounded px-3 py-2"
-            required
-          >
-            <option value="">Select Day</option>
-            {daysOfWeek.map((day) => (
-              <option key={day} value={day}>{day}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label className="block mb-1 font-medium">Start Time</label>
-            <input
-              type="time"
-              name="start_time"
-              value={availabilityForm.start_time}
-              onChange={handleAvailabilityChange}
-              className="w-full border rounded px-3 py-2"
-              required
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block mb-1 font-medium">End Time</label>
-            <input
-              type="time"
-              name="end_time"
-              value={availabilityForm.end_time}
-              onChange={handleAvailabilityChange}
-              className="w-full border rounded px-3 py-2"
-              required
-            />
-          </div>
-        </div>
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          disabled={loading}
-        >
-          {loading ? 'Submitting...' : 'Create Availability'}
-        </button>
-      </form>
-
-      <h2 className="text-2xl font-bold mb-4">Add Doctor Leave</h2>
-      <form onSubmit={handleLeaveSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1 font-medium">Doctor</label>
-          <select
-            name="doctor"
-            value={leaveForm.doctor}
-            onChange={handleLeaveChange}
-            className="w-full border rounded px-3 py-2"
-            required
-          >
-            <option value="">Select Doctor</option>
-            {doctors.map((doc) => (
-              <option key={doc.user_id} value={doc.user_id}>
-                {doc.first_name} {doc.last_name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Date</label>
-          <input
-            type="date"
-            name="date"
-            value={leaveForm.date}
-            onChange={handleLeaveChange}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Reason (optional)</label>
-          <input
-            type="text"
-            name="reason"
-            value={leaveForm.reason}
-            onChange={handleLeaveChange}
-            className="w-full border rounded px-3 py-2"
-            placeholder="Reason for leave"
-          />
-        </div>
-        <button
-          type="submit"
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          disabled={loading}
-        >
-          {loading ? 'Submitting...' : 'Add Leave'}
-        </button>
-      </form>
+    <div className="max-w-2xl mx-auto mt-10 space-y-10">
+      {/* Feedback Message */}
       {(message || error) && (
-        <div className={`mt-4 p-3 rounded ${message ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-          {message || error}
+        <div className={`fixed top-6 right-6 z-50 px-4 py-3 rounded shadow-lg flex items-center gap-4 ${message ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <span>{message || error}</span>
+          <button onClick={() => { setMessage(''); setError(''); }} className="ml-2 text-lg font-bold">&times;</button>
         </div>
       )}
+      {/* Doctor Availability Card */}
+      <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <span className="inline-block bg-blue-100 text-blue-600 rounded-full p-2">
+            <Calendar className="w-5 h-5" />
+          </span>
+          Create Doctor Availability
+        </h2>
+        <form onSubmit={handleAvailabilitySubmit} className="space-y-5">
+          <div>
+            <label className="block mb-1 font-medium">Doctor <span className="text-red-500">*</span></label>
+            <select
+              name="doctor"
+              value={availabilityForm.doctor}
+              onChange={handleAvailabilityChange}
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition"
+              required
+            >
+              <option value="">Select Doctor</option>
+              {doctors.map((doc) => (
+                <option key={doc.user_id} value={doc.user_id}>
+                  {doc.first_name} {doc.last_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Day of Week <span className="text-red-500">*</span></label>
+            <select
+              name="day_of_week"
+              value={availabilityForm.day_of_week}
+              onChange={handleAvailabilityChange}
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition"
+              required
+            >
+              <option value="">Select Day</option>
+              {daysOfWeek.map((day) => (
+                <option key={day} value={day}>{day}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block mb-1 font-medium">Start Time <span className="text-red-500">*</span></label>
+              <input
+                type="time"
+                name="start_time"
+                value={availabilityForm.start_time}
+                onChange={handleAvailabilityChange}
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition"
+                required
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block mb-1 font-medium">End Time <span className="text-red-500">*</span></label>
+              <input
+                type="time"
+                name="end_time"
+                value={availabilityForm.end_time}
+                onChange={handleAvailabilityChange}
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition"
+                required
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg mt-2 hover:bg-blue-700 transition"
+            disabled={loading}
+          >
+            {loading ? 'Submitting...' : 'Create Availability'}
+          </button>
+        </form>
+      </div>
+      {/* Doctor Leave Card */}
+      <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <span className="inline-block bg-green-100 text-green-600 rounded-full p-2">
+            <Sun className="w-5 h-5" />
+          </span>
+          Add Doctor Leave
+        </h2>
+        <form onSubmit={handleLeaveSubmit} className="space-y-5">
+          <div>
+            <label className="block mb-1 font-medium">Doctor <span className="text-red-500">*</span></label>
+            <select
+              name="doctor"
+              value={leaveForm.doctor}
+              onChange={handleLeaveChange}
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-400 transition"
+              required
+            >
+              <option value="">Select Doctor</option>
+              {doctors.map((doc) => (
+                <option key={doc.user_id} value={doc.user_id}>
+                  {doc.first_name} {doc.last_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Date <span className="text-red-500">*</span></label>
+            <input
+              type="date"
+              name="date"
+              value={leaveForm.date}
+              onChange={handleLeaveChange}
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-400 transition"
+              required
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Reason (optional)</label>
+            <input
+              type="text"
+              name="reason"
+              value={leaveForm.reason}
+              onChange={handleLeaveChange}
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-200 focus:border-green-400 transition"
+              placeholder="Reason for leave"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-green-600 text-white font-semibold py-2 rounded-lg mt-2 hover:bg-green-700 transition"
+            disabled={loading}
+          >
+            {loading ? 'Submitting...' : 'Add Leave'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

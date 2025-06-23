@@ -6,6 +6,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import enUS from 'date-fns/locale/en-US';
 
+
 const locales = {
   'en-US': enUS,
 };
@@ -24,11 +25,21 @@ const DoctorAppointments = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'calendar'
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDayAppointments, setSelectedDayAppointments] = useState([]);
+  const [selectedDate, setSelectedDate] = useState('');
 
   // Filter appointments based on search term
   const filteredAppointments = appointments.filter(appt =>
     appt.patient_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const appointmentsByDate = {};
+  filteredAppointments.forEach(appt => {
+    const dateKey = appt.date; // 'YYYY-MM-DD'
+    if (!appointmentsByDate[dateKey]) appointmentsByDate[dateKey] = [];
+    appointmentsByDate[dateKey].push(appt);
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,6 +88,80 @@ const DoctorAppointments = () => {
       resource: appt,
     };
   });
+
+  const CustomMonthDateCell = ({ date }) => {
+    const dateKey = format(date, 'yyyy-MM-dd');
+    const appts = appointmentsByDate[dateKey] || [];
+    const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+
+    return (
+      <div
+        className={`relative h-full min-h-[80px] p-1 rounded-lg cursor-pointer transition-colors duration-150 ${isToday ? 'border-2 border-blue-500 bg-blue-50' : 'hover:bg-gray-50'}`}
+        onClick={e => {
+          e.stopPropagation();
+          setSelectedDayAppointments(appts);
+          setSelectedDate(dateKey);
+          setModalOpen(true);
+        }}
+        title={`Appointments for ${dateKey}`}
+      >
+        <div className="absolute top-1 right-2 text-xs font-bold text-gray-400">{date.getDate()}</div>
+        <div className="flex flex-col gap-1 mt-5">
+          {appts.length === 0 ? (
+            <div className="text-xs text-gray-300 italic">No appointments</div>
+          ) : (
+            appts.slice(0, 2).map(appt => (
+              <div
+                key={appt.id}
+                className={`truncate px-2 py-1 rounded text-xs font-medium cursor-pointer
+                  ${appt.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}
+                `}
+                title={`${appt.patient_name} (${appt.time})`}
+              >
+                {appt.patient_name} <span className="font-normal text-gray-500">({appt.time})</span>
+              </div>
+            ))
+          )}
+          {appts.length > 2 && (
+            <div className="text-xs text-blue-600 mt-1">+{appts.length - 2} more</div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Custom Modal for viewing all appointments on a selected day
+  const AppointmentsModal = ({ open, onClose, appointments, date }) => {
+    if (!open) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+          <button
+            className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            &times;
+          </button>
+          <h2 className="text-lg font-semibold mb-4 text-center">Appointments for {date}</h2>
+          {appointments.length === 0 ? (
+            <div className="text-gray-500 text-center">No appointments found.</div>
+          ) : (
+            <ul className="divide-y divide-gray-200 max-h-80 overflow-y-auto">
+              {appointments.map(appt => (
+                <li key={appt.id} className="py-3">
+                  <div className="font-medium text-gray-900">{appt.patient_name}</div>
+                  <div className="text-sm text-gray-600">Time: {appt.time}</div>
+                  <div className="text-xs text-gray-500">Status: {appt.status}</div>
+                  <div className="text-xs text-gray-500">Notes: {appt.notes || '-'}</div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="p-6 space-y-8">
@@ -205,10 +290,8 @@ const DoctorAppointments = () => {
                 startAccessor="start"
                 endAccessor="end"
                 style={{ height: 500 }}
-                views={['month', 'week', 'day']}
+                views={['month']}
                 defaultView="month"
-                popup
-                tooltipAccessor={event => event.title}
                 components={{
                   event: ({ event }) => (
                     <span>
@@ -216,12 +299,21 @@ const DoctorAppointments = () => {
                       {event.resource && event.resource.notes ? <div className="text-xs text-gray-500">{event.resource.notes}</div> : null}
                     </span>
                   ),
+                  month: {
+                    dateHeader: CustomMonthDateCell,
+                  },
                 }}
               />
             </div>
           )}
         </>
       )}
+      <AppointmentsModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        appointments={selectedDayAppointments}
+        date={selectedDate}
+      />
     </div>
   );
 };

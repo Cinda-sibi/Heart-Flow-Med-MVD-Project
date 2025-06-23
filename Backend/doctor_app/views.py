@@ -301,3 +301,93 @@ class SonographerListAPIView(APIView):
         sonographers = ProfileUser.objects.filter(role='Sonographer')
         serializer = SonographerListSerializer(sonographers, many=True)
         return custom_200("Sonographers listed successfully",serializer.data)
+    
+
+# prescription by doctor 
+# class WritePrescriptionAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, appointment_id):
+#         try:
+#             appointment = Appointment.objects.get(id=appointment_id)
+#         except Appointment.DoesNotExist:
+#             return custom_404("Appointment not found")
+
+#         if request.user != appointment.doctor:
+#             return custom_404("You are not authorized to prescribe for this appointment")
+
+#         data = request.data.copy()
+#         data['patient'] = appointment.patient.patientprofile.id
+#         data['prescribed_by'] = request.user.id
+
+#         serializer = PrescriptionSerializer(data=data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return custom_200("Prescription created successfully",serializer.data)
+#         return custom_404(serializer.errors)
+
+class WritePrescriptionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, appointment_id):
+        try:
+            appointment = Appointment.objects.get(id=appointment_id)
+        except Appointment.DoesNotExist:
+            return Response({"error": "Appointment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user != appointment.doctor:
+            return Response({"error": "You are not authorized to prescribe for this appointment"},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+        data['patient'] = appointment.patient.patientprofile.id
+        data['prescribed_by'] = request.user.id
+
+        # Validate prescription data
+        serializer = PrescriptionSerializer(data=data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Extract medication IDs
+        medication_ids = [item['medication'] for item in data.get('items', [])]
+
+        # Check for drug interactions
+        from administrative_staff_app.models import DrugInteraction
+        interaction_warnings = []
+
+        for i in range(len(medication_ids)):
+            for j in range(i + 1, len(medication_ids)):
+                med1 = medication_ids[i]
+                med2 = medication_ids[j]
+
+                # Check both directions
+                interaction = DrugInteraction.objects.filter(
+                    medication_1_id=med1,
+                    medication_2_id=med2
+                ).first() or DrugInteraction.objects.filter(
+                    medication_1_id=med2,
+                    medication_2_id=med1
+                ).first()
+
+                if interaction:
+                    interaction_warnings.append({
+                        "medication_1_id": med1,
+                        "medication_2_id": med2,
+                        "severity": interaction.severity,
+                        "description": interaction.description
+                    })
+
+        # If high severity interaction exists, optionally block saving
+        # If you want to block, uncomment below:
+        # if any(w['severity'] == 'High' for w in interaction_warnings):
+        #     return Response({"error": "High severity drug interaction detected", "interactions": interaction_warnings},
+        #                     status=status.HTTP_400_BAD_REQUEST)
+
+        # Save prescription
+        prescription = serializer.save()
+
+        return Response({
+            "message": "Prescription created successfully",
+            "data": PrescriptionSerializer(prescription).data,
+            "interactions": interaction_warnings
+        }, status=status.HTTP_201_CREATED)

@@ -33,6 +33,7 @@ import BillingRecords from './pages/sidebarpages/administrativestaff/BillingReco
 import CreateDoctorAvailability from './pages/sidebarpages/doctors/CreateDoctorAvailability';
 import DoctorAppointments from './pages/sidebarpages/doctors/DoctorAppointments';
 import AssiginingToSonographers from './pages/sidebarpages/doctors/AssiginingToSonographers';
+import DoctorPatients from './pages/sidebarpages/doctors/DoctorPatients';
 
 // import sidebars pages general practitioner
 import PatientsReferral from './pages/sidebarpages/gp/PatientsReferral';
@@ -148,7 +149,7 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <LayoutWrapper>
-                <MedicalHistory />
+                <DoctorPatients />
               </LayoutWrapper>
             </ProtectedRoute>
           } 
@@ -196,6 +197,7 @@ function AppRoutes() {
           } 
         />
       )}
+     
 
       {/* Patient: Medical History Route */}
       {user?.role === 'Patient' && (

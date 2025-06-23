@@ -60,3 +60,9 @@ export const assignPatientToSonographer = async (payload) => {
   const response = await axiosInstance.post('/sonography-referral/', payload);
   return response.data;
 };
+
+// Fetch patients of the logged-in doctor
+export const fetchPatientsByLoginDoctor = async () => {
+  const response = await axiosInstance.get('/list-patients-by-login-doc/');
+  return response.data;
+};

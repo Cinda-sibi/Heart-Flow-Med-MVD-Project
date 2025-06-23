@@ -364,5 +364,6 @@ class UserNotificationListAPIView(APIView):
     def get(self, request):
         user = request.user
         notifications = Notification.objects.filter(user=user)
+        notifications.filter(is_read=False).update(is_read=True)
         serializer = NotificationSerializer(notifications, many=True)
         return  custom_200("Notifications listed successfully",serializer.data)

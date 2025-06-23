@@ -22,25 +22,25 @@ const Header = ({ setSidebarOpen }) => {
       case 'Cardiologist':
         return (
           <div className="text-xs text-gray-500">
-            {profile.doctor_profile?.specialization} • {profile.doctor_profile?.experience} years
+            {profile.profile?.specialization} • {profile.profile?.experience} years
           </div>
         );
       case 'Nurse':
         return (
           <div className="text-xs text-gray-500">
-            {profile.nurse_profile?.department}
+            {profile.profile?.department}
           </div>
         );
       case 'Administrative Staff':
         return (
           <div className="text-xs text-gray-500">
-            {profile.admin_staff_profile?.office_location}
+            {profile.profile?.office_location}
           </div>
         );
       case 'Patient':
         return (
           <div className="text-xs text-gray-500">
-            ID: {profile.patient_profile?.unique_id}
+            ID: {profile.profile?.unique_id}
           </div>
         );
       default:
@@ -60,8 +60,8 @@ const Header = ({ setSidebarOpen }) => {
     setNotifLoading(true);
     setNotifError(null);
     try {
-      const data = await ProfileApis.getNotifications();
-      setNotifications(data);
+      const response = await ProfileApis.getNotifications();
+      setNotifications(response.data);
     } catch (error) {
       setNotifError('Failed to load notifications');
     } finally {
