@@ -10,7 +10,10 @@ from heart_flow_app.models import *
 from . models import *
 from patient_app.serializers import *
 from . serializers import *
+from django.utils import timezone
+from datetime import datetime, timedelta
 from django.utils.timezone import now
+from rest_framework.parsers import MultiPartParser, FormParser
 from administrative_staff_app.serializers import *
 # Create your views here.
 
@@ -164,14 +167,30 @@ class ListAllDoctorAppointments(APIView):
     def get(self, request):
         doctor = request.user
 
-        # Ensure the user is a doctor
         if doctor.role != 'Cardiologist':
             return custom_404("Only doctors can access their appointments.")
 
-        # Fetch all appointments of the doctor
         appointments = Appointment.objects.filter(doctor=doctor).order_by('-date', '-time')
 
-        serializer = AppointmentListSerializer(appointments, many=True)
+        now_nz = timezone.localtime(timezone.now())  # Ensure you get current time in NZ timezone
+        updated_appointments = []
+
+        for appointment in appointments:
+            appointment_datetime = datetime.combine(appointment.date, appointment.time)
+            appointment_datetime = timezone.make_aware(appointment_datetime, timezone.get_current_timezone())
+
+            # Skip if cancelled
+            if appointment.status == 'Cancelled':
+                continue
+
+            # If appointment is in the past, mark as completed
+            if appointment_datetime < now_nz and appointment.status != 'Completed':
+                appointment.status = 'Completed'
+                appointment.save(update_fields=['status'])
+
+            updated_appointments.append(appointment)
+
+        serializer = AppointmentListSerializer(updated_appointments, many=True)
         return custom_200("All appointments listed successfully", serializer.data)
 
 
@@ -188,3 +207,97 @@ class DoctorOwnAvailabilityAPIView(APIView):
         availability = DoctorAvailability.objects.filter(doctor=user)
         serializer = DoctorAvailabilitySerializer(availability, many=True)
         return custom_200("Doctor's availability listed successfully", serializer.data)
+
+
+# sonography referal
+class SonographyReferralView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role == 'Sonographer':
+            referrals = SonographyReferral.objects.filter(sonographer=user)
+        elif user.role == 'Cardiologist':
+            referrals = SonographyReferral.objects.filter(doctor=user)
+        else:
+            referrals = SonographyReferral.objects.none()
+
+        serializer = SonographyReferralSerializer(referrals, many=True)
+        return custom_200("Referrals fetched",serializer.data)
+
+    def post(self, request):
+        if request.user.role != 'Cardiologist':
+            return Response({"message": "Only doctors can refer patients"}, status=403)
+
+        data = request.data.copy()
+        data['doctor'] = request.user.id
+
+        serializer = SonographyReferralSerializer(data=data)
+        if serializer.is_valid():
+            referral = serializer.save()
+
+            # ✅ Create Notification for Sonographer
+            Notification.objects.create(
+                user=referral.sonographer,
+                notification_type='referral_received',
+                title='New Sonography Referral',
+                message=f"You have been referred a new patient: {referral.patient.get_full_name()}",
+                appointment=referral.appointment
+            )
+
+            # ✅ Send Email to Sonographer
+            send_mail(
+                subject="New Sonography Referral",
+                message=(
+                    f"Dear {referral.sonographer.get_full_name()},\n\n"
+                    f"You have received a new sonography referral from Dr. {referral.doctor.get_full_name()}.\n"
+                    f"Patient: {referral.patient.get_full_name()}\n"
+                    f"Reason: {referral.reason}\n\n"
+                    f"Please log in to view more details.\n\n"
+                    f"- HeartFlow Med Team"
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[referral.sonographer.email],
+                fail_silently=False
+            )
+
+            return custom_200("Referral created",serializer.data)
+        return custom_404(serializer.errors)
+    
+
+# upload report as sonographer for patient 
+class SonographyReportUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, pk):
+        try:
+            referral = SonographyReferral.objects.get(id=pk, sonographer=request.user)
+        except SonographyReferral.DoesNotExist:
+            return custom_404("Referral not found or unauthorized")
+
+        serializer = SonographyReferralReportSerializer(referral, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save(status="Completed")  # Mark completed on report upload
+
+            # Notify doctor
+            Notification.objects.create(
+                user=referral.doctor,
+                notification_type='referral_received',
+                title='Sonography Completed',
+                message=f"Sonography report uploaded for patient {referral.patient.get_full_name()} by {referral.sonographer.get_full_name()}",
+                appointment=referral.appointment
+            )
+
+            return custom_200("Report uploaded and status updated",serializer.data)
+        return custom_404(serializer.errors)
+
+
+# list all sonographers
+class SonographerListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        sonographers = ProfileUser.objects.filter(role='Sonographer')
+        serializer = SonographerListSerializer(sonographers, many=True)
+        return custom_200("Sonographers listed successfully",serializer.data)

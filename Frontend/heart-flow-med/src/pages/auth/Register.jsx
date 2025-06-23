@@ -255,7 +255,8 @@ const Register = () => {
                 { value: 'Cardiologist', label: 'Doctor (Cardiologist)' },
                 { value: 'Administrative Staff', label: 'Administrative Staff' },
                 { value: 'Nurse', label: 'Nurse' },
-                { value: 'Sonographer', label: 'Sonographer' }
+                { value: 'Sonographer', label: 'Sonographer' },
+                { value: 'General Practitioner', label: 'General Practitioner' },
               ]
             )}
 

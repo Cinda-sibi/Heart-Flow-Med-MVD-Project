@@ -25,6 +25,9 @@ urlpatterns = [
     path('api/',include('patient_app.urls')),
     path('api/',include('doctor_app.urls')),
     path('api/',include('administrative_staff_app.urls')),
+    path('api/',include('gp_app.urls')),
+    path('api/',include('admin_app.urls')),
+    path('api/',include('nurse_app.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

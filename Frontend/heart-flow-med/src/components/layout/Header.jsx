@@ -1,14 +1,19 @@
-import { Bell, Search, User, LogOut, Settings } from 'lucide-react';
+import { Bell, Search, User, LogOut, Settings, Menu } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import useUserProfile from '../../hooks/useUserProfile';
 import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import { useState } from 'react';
+import { ProfileApis } from '../../apis/ProfileApis';
 
-const Header = () => {
+const Header = ({ setSidebarOpen }) => {
   const { user, logout } = useAuth();
   const { profile, loading, error } = useUserProfile();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifError, setNotifError] = useState(null);
 
   const getRoleSpecificInfo = () => {
     if (!profile) return null;
@@ -50,6 +55,22 @@ const Header = () => {
 
   const closeModal = () => setIsModalOpen(false);
 
+  const handleNotifClick = async () => {
+    setIsNotifModalOpen(true);
+    setNotifLoading(true);
+    setNotifError(null);
+    try {
+      const data = await ProfileApis.getNotifications();
+      setNotifications(data);
+    } catch (error) {
+      setNotifError('Failed to load notifications');
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  const closeNotifModal = () => setIsNotifModalOpen(false);
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       {/* Modal for user profile */}
@@ -74,30 +95,65 @@ const Header = () => {
           )}
         </div>
       </Modal>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Notifications Modal */}
+      <Modal isOpen={isNotifModalOpen} onClose={closeNotifModal}>
+        <div className="flex flex-col space-y-2">
+          <div className="text-lg font-semibold mb-2">Notifications</div>
+          {notifLoading ? (
+            <div className="text-gray-500">Loading...</div>
+          ) : notifError ? (
+            <div className="text-red-500">{notifError}</div>
+          ) : notifications && notifications.length > 0 ? (
+            <ul className="divide-y divide-gray-200 max-h-80 overflow-y-auto">
+              {notifications.map((notif) => (
+                <li key={notif.id} className="py-3 hover:bg-gray-50">
+                  <div className="flex flex-col space-y-1">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-900">{notif.title}</span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(notif.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">{notif.message}</p>
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        notif.is_read ? 'bg-gray-100 text-gray-600' : 'bg-blue-100 text-blue-600'
+                      }`}>
+                        {notif.is_read ? 'Read' : 'Unread'}
+                      </span>
+                      <span className="text-xs text-gray-500">{notif.notification_type.replace(/_/g, ' ')}</span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-gray-500">No notifications found.</div>
+          )}
+        </div>
+      </Modal>
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md">
-            {/* <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Search patients, appointments..."
-              />
-            </div> */}
+          {/* Hamburger for mobile */}
+          <div className="flex items-center">
+            <button
+              className="md:hidden p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            {/* Optionally, logo or title here for mobile */}
           </div>
-
+          {/* Search Bar (hidden for now) */}
+          <div className="flex-1 max-w-md" />
           {/* Right side */}
           <div className="flex items-center space-x-4">
             {/* Notifications */}
-            <button className="p-2 text-gray-400 hover:text-gray-600 relative">
+            <button className="p-2 text-gray-400 hover:text-gray-600 relative" onClick={handleNotifClick}>
               <Bell className="h-6 w-6" />
               <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
             </button>
-
             {/* User Menu */}
             <div className="relative">
               <div className="flex items-center space-x-3">

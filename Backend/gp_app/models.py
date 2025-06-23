@@ -1,0 +1,36 @@
+from django.db import models
+from heart_flow_app.models import ProfileUser , PatientProfile
+# Create your models here.
+# models.py
+
+# models.py
+
+class PatientReferral(models.Model):
+    referred_by = models.ForeignKey(ProfileUser,on_delete=models.CASCADE,limit_choices_to={'role': 'General Practitioner'}, related_name='referred_patients')
+    referred_to = models.ForeignKey(ProfileUser, on_delete=models.CASCADE, related_name="referrals_received",null=True,blank=True) 
+    # Instead of FK to PatientProfile, we store temporary patient info
+    patient_first_name = models.CharField(max_length=100)
+    patient_last_name = models.CharField(max_length=100)
+    patient_email = models.EmailField(null=True, blank=True)
+    patient_phone = models.CharField(max_length=20, null=True, blank=True)
+    gender = models.CharField(max_length=10, null=True, blank=True)
+    age = models.IntegerField(null=True, blank=True)
+    reason = models.TextField(null=True, blank=True)
+    referred_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[('Pending', 'Pending'), ('Accepted', 'Accepted'), ('Rejected', 'Rejected')],
+        default='Pending'
+    )
+
+    linked_patient = models.ForeignKey(
+        PatientProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Link to actual PatientProfile once created"
+    )
+
+    def __str__(self):
+        return f"{self.patient_first_name} {self.patient_last_name} referred by {self.referred_by.get_full_name()}"
+

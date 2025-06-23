@@ -1,14 +1,26 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import useUserProfile from '../hooks/useUserProfile';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Mail, Phone, Calendar, MapPin, Shield, Briefcase, Building } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 
 const Profile = () => {
-  const { profile, loading, error } = useUserProfile();
+  const { profile, loading, error, updateProfile } = useUserProfile();
   const { user } = useAuth();
+  const [editMode, setEditMode] = useState(false);
+  const [form, setForm] = useState(null);
+  const [success, setSuccess] = useState('');
+  const [updateError, setUpdateError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  if (loading) {
+  // Initialize form state when profile loads
+  React.useEffect(() => {
+    if (profile) {
+      setForm({ ...profile });
+    }
+  }, [profile]);
+
+  if (loading || !form) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-screen">
@@ -44,9 +56,54 @@ const Profile = () => {
     </div>
   );
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRoleSpecificChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEdit = () => {
+    setEditMode(true);
+    setSuccess('');
+    setUpdateError('');
+  };
+
+  const handleCancel = () => {
+    setEditMode(false);
+    setForm({ ...profile });
+    setSuccess('');
+    setUpdateError('');
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setUpdateError('');
+    setSuccess('');
+    try {
+      // Only send fields that are editable
+      const payload = { ...form };
+      const response = await updateProfile(payload);
+      if (response.status) {
+        setSuccess('Profile updated successfully!');
+        setEditMode(false);
+      } else {
+        setUpdateError(response.message || 'Failed to update profile');
+      }
+    } catch (err) {
+      setUpdateError(err.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderRoleSpecificInfo = () => {
-    if (!profile) return null;
-    switch (profile.role) {
+    if (!form) return null;
+    switch (form.role) {
       case 'Cardiologist':
         return (
           <InfoCard title="Professional Information" icon={Briefcase} color="blue">
@@ -55,21 +112,51 @@ const Profile = () => {
                 <Briefcase className="h-5 w-5 text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm text-gray-500">Specialization</p>
-                  <p className="font-medium">{profile.specialization}</p>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      name="specialization"
+                      value={form.specialization || ''}
+                      onChange={handleRoleSpecificChange}
+                      className="border rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    <p className="font-medium">{form.specialization}</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center">
                 <Calendar className="h-5 w-5 text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm text-gray-500">Experience</p>
-                  <p className="font-medium">{profile.experience} years</p>
+                  {editMode ? (
+                    <input
+                      type="number"
+                      name="experience"
+                      value={form.experience || ''}
+                      onChange={handleRoleSpecificChange}
+                      className="border rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    <p className="font-medium">{form.experience} years</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center">
                 <Shield className="h-5 w-5 text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm text-gray-500">Consultation Fee</p>
-                  <p className="font-medium">${profile.fees}</p>
+                  {editMode ? (
+                    <input
+                      type="number"
+                      name="fees"
+                      value={form.fees || ''}
+                      onChange={handleRoleSpecificChange}
+                      className="border rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    <p className="font-medium">${form.fees}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -82,7 +169,17 @@ const Profile = () => {
               <Building className="h-5 w-5 text-gray-400 mr-3" />
               <div>
                 <p className="text-sm text-gray-500">Department</p>
-                <p className="font-medium">{profile.department}</p>
+                {editMode ? (
+                  <input
+                    type="text"
+                    name="department"
+                    value={form.department || ''}
+                    onChange={handleRoleSpecificChange}
+                    className="border rounded px-2 py-1 w-full"
+                  />
+                ) : (
+                  <p className="font-medium">{form.department}</p>
+                )}
               </div>
             </div>
           </InfoCard>
@@ -94,7 +191,17 @@ const Profile = () => {
               <Building className="h-5 w-5 text-gray-400 mr-3" />
               <div>
                 <p className="text-sm text-gray-500">Office Location</p>
-                <p className="font-medium">{profile.office_location}</p>
+                {editMode ? (
+                  <input
+                    type="text"
+                    name="office_location"
+                    value={form.office_location || ''}
+                    onChange={handleRoleSpecificChange}
+                    className="border rounded px-2 py-1 w-full"
+                  />
+                ) : (
+                  <p className="font-medium">{form.office_location}</p>
+                )}
               </div>
             </div>
           </InfoCard>
@@ -106,22 +213,42 @@ const Profile = () => {
               <div className="flex items-center">
                 <Shield className="h-5 w-5 text-gray-400 mr-3" />
                 <div>
-                  <p className="text-sm text-gray-500">Patient ID</p>
-                  <p className="font-medium">{profile.unique_id}</p>
+                  <p className="text-sm text-gray-500">Patient MRI No.</p>
+                  <p className="font-medium">{form.unique_id}</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <Shield className="h-5 w-5 text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm text-gray-500">Insurance Provider</p>
-                  <p className="font-medium">{profile.insurance_provider || 'Not specified'}</p>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      name="insurance_provider"
+                      value={form.insurance_provider || ''}
+                      onChange={handleRoleSpecificChange}
+                      className="border rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    <p className="font-medium">{form.insurance_provider || 'Not specified'}</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center">
                 <Shield className="h-5 w-5 text-gray-400 mr-3" />
                 <div>
                   <p className="text-sm text-gray-500">Insurance ID</p>
-                  <p className="font-medium">{profile.insurance_id || 'Not specified'}</p>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      name="insurance_id"
+                      value={form.insurance_id || ''}
+                      onChange={handleRoleSpecificChange}
+                      className="border rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    <p className="font-medium">{form.insurance_id || 'Not specified'}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -136,9 +263,19 @@ const Profile = () => {
     <Layout>
       <div className="p-6 space-y-6">
         {/* Page Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-gray-600">View and manage your profile information.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+            <p className="text-gray-600">View and manage your profile information.</p>
+          </div>
+          {!editMode && (
+            <button
+              className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+              onClick={handleEdit}
+            >
+              Edit
+            </button>
+          )}
         </div>
         {/* Profile Header Card */}
         <div className=" bg-gray-200 p-6 rounded-lg shadow flex items-center text-black space-x-4">
@@ -147,46 +284,110 @@ const Profile = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-black">
-              {profile?.first_name} {profile?.last_name}
+              {form?.first_name} {form?.last_name}
             </h1>
-            <p className="text-black capitalize">{profile?.role}</p>
+            <p className="text-black capitalize">{form?.role}</p>
           </div>
         </div>
         {/* Basic Information Card */}
-        <InfoCard title="Basic Information" icon={Mail} color="blue">
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <Mail className="h-5 w-5 text-gray-400 mr-3" />
-              <div>
-                <p className="text-sm text-gray-500">Email</p>
-                <p className="font-medium">{profile?.email}</p>
+        <form onSubmit={handleSave}>
+          <InfoCard title="Basic Information" icon={Mail} color="blue">
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <Mail className="h-5 w-5 text-gray-400 mr-3" />
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  {editMode ? (
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email || ''}
+                      onChange={handleChange}
+                      className="border rounded px-2 py-1 w-full"
+                      required
+                    />
+                  ) : (
+                    <p className="font-medium">{form?.email}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center">
+                <Phone className="h-5 w-5 text-gray-400 mr-3" />
+                <div>
+                  <p className="text-sm text-gray-500">Phone</p>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      name="phone"
+                      value={form.phone || ''}
+                      onChange={handleChange}
+                      className="border rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    <p className="font-medium">{form?.phone || 'Not specified'}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center">
+                <Calendar className="h-5 w-5 text-gray-400 mr-3" />
+                <div>
+                  <p className="text-sm text-gray-500">Date of Birth</p>
+                  {editMode ? (
+                    <input
+                      type="date"
+                      name="date_of_birth"
+                      value={form.date_of_birth || ''}
+                      onChange={handleChange}
+                      className="border rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    <p className="font-medium">{form?.date_of_birth || 'Not specified'}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center">
+                <MapPin className="h-5 w-5 text-gray-400 mr-3" />
+                <div>
+                  <p className="text-sm text-gray-500">Address</p>
+                  {editMode ? (
+                    <input
+                      type="text"
+                      name="address"
+                      value={form.address || ''}
+                      onChange={handleChange}
+                      className="border rounded px-2 py-1 w-full"
+                    />
+                  ) : (
+                    <p className="font-medium">{form?.address || 'Not specified'}</p>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex items-center">
-              <Phone className="h-5 w-5 text-gray-400 mr-3" />
-              <div>
-                <p className="text-sm text-gray-500">Phone</p>
-                <p className="font-medium">{profile?.phone || 'Not specified'}</p>
-              </div>
+          </InfoCard>
+          {/* Role Specific Information Card */}
+          {renderRoleSpecificInfo()}
+          {editMode && (
+            <div className="flex space-x-2 mt-4">
+              <button
+                type="button"
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+                onClick={handleCancel}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
             </div>
-            <div className="flex items-center">
-              <Calendar className="h-5 w-5 text-gray-400 mr-3" />
-              <div>
-                <p className="text-sm text-gray-500">Date of Birth</p>
-                <p className="font-medium">{profile?.date_of_birth || 'Not specified'}</p>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <MapPin className="h-5 w-5 text-gray-400 mr-3" />
-              <div>
-                <p className="text-sm text-gray-500">Address</p>
-                <p className="font-medium">{profile?.address || 'Not specified'}</p>
-              </div>
-            </div>
-          </div>
-        </InfoCard>
-        {/* Role Specific Information Card */}
-        {renderRoleSpecificInfo()}
+          )}
+          {success && <div className="text-green-600 text-sm mt-2">{success}</div>}
+          {updateError && <div className="text-red-600 text-sm mt-2">{updateError}</div>}
+        </form>
       </div>
     </Layout>
   );

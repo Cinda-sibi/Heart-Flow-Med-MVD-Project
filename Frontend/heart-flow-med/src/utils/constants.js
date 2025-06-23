@@ -40,6 +40,14 @@ export const NAVIGATION_ITEMS = {
     { name: 'Waiting Queue', path: '/receptionist/queue', icon: 'Clock' },
     { name: 'Patient Records', path: '/receptionist/records', icon: 'FileText' },
     { name: 'Billing', path: '/receptionist/billing', icon: 'CreditCard' }
+  ],
+  gp: [
+    { name: 'Dashboard', path: '/gp/dashboard', icon: 'LayoutDashboard' },
+    { name: 'Assign Patients', path: '/gp/assign-patients', icon: 'Users' },
+    { name: 'Appointments', path: '/gp/appointments', icon: 'Calendar' },
+    { name: 'Patient Records', path: '/gp/records', icon: 'FileText' },
+    { name: 'Messages', path: '/gp/messages', icon: 'MessageSquare' },
+    { name: 'Profile', path: '/gp/profile', icon: 'User' }
   ]
 };
 
@@ -48,7 +56,8 @@ export const USER_ROLES = {
   CARDIOLOGIST: 'cardiologist',
   NURSE: 'nurse',
   ADMIN: 'admin',
-  RECEPTIONIST: 'receptionist'
+  RECEPTIONIST: 'receptionist',
+  GP: 'gp'
 };
 
 export const APPOINTMENT_STATUSES = {

@@ -3,8 +3,6 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from . manager import CustomUserManager
 
-
-
 class ProfileUser(AbstractUser):
     ROLE_CHOICES = [
         ('Admin', 'Admin'),
@@ -143,6 +141,7 @@ class Appointment(models.Model):
     time = models.TimeField()
     status = models.CharField(max_length=20, choices=[('Scheduled', 'Scheduled'), ('Completed', 'Completed'), ('Cancelled', 'Cancelled')])
     notes = models.TextField(blank=True)
+    files = models.ImageField(upload_to='medical_files/',null=True,blank=True)
     
 
     def __str__(self):
@@ -156,6 +155,7 @@ class Notification(models.Model):
         ('appointment_updated', 'Appointment Updated'),
         ('appointment_cancelled', 'Appointment Cancelled'),
         ('appointment_reminder', 'Appointment Reminder'),
+        ('referral_received' , 'referral_received')
     )
 
     user = models.ForeignKey(ProfileUser, on_delete=models.CASCADE, related_name='notifications')

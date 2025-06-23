@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView 
 from .mixins import *
-from .serializers import *
+from . serializers import *
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from . utils import *
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -29,6 +29,8 @@ class RoleBasedRegistrationAPIView(APIView):
             serializer = NurseRegistrationSerializer(data=request.data)
         elif role == 'Sonographer':
             serializer = SonographerRegistrationSerializer(data=request.data)
+        elif role == 'General Practitioner':
+            serializer =  BaseUserSerializer(data=request.data)   
         else:
             return custom_404('Unsupported role')
 
@@ -355,3 +357,12 @@ class UpdateUserProfileAPIView(APIView):
         
         return custom_404(serializer.errors)
 
+
+class UserNotificationListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        notifications = Notification.objects.filter(user=user)
+        serializer = NotificationSerializer(notifications, many=True)
+        return  custom_200("Notifications listed successfully",serializer.data)

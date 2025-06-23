@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { fetchAllSonographers } from '../../../apis/DoctorDashboardApis';
-import ProfileApis from '../../../apis/ProfileApis';
+import { fetchAllSonographers, assignPatientToSonographer } from '../../../apis/DoctorDashboardApis';
+import { getAllPatients } from '../../../apis/AdministrativeStaffDashboardApis';
 
 const AssiginingToSonographers = () => {
   const [sonographers, setSonographers] = useState([]);
@@ -16,10 +16,10 @@ const AssiginingToSonographers = () => {
       try {
         const sonographerRes = await fetchAllSonographers();
         setSonographers(sonographerRes.data || []);
-        const patientRes = await ProfileApis.searchPatients({ name: '' });
+        const patientRes = await getAllPatients();
         setPatients(patientRes.data || []);
       } catch (err) {
-        setError('Failed to fetch data');
+        setError('Failed to fetch sonographers or patients');
       } finally {
         setLoading(false);
       }
@@ -27,10 +27,21 @@ const AssiginingToSonographers = () => {
     fetchData();
   }, []);
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (!selectedSonographer || !selectedPatient) return;
-    // Placeholder for assignment logic
-    alert(`Assigned patient ${selectedPatient.first_name} to sonographer ${selectedSonographer.first_name}`);
+    setLoading(true);
+    setError('');
+    try {
+      await assignPatientToSonographer({
+        patient_id: selectedPatient.id,
+        sonographer_id: selectedSonographer.id,
+      });
+      alert(`Assigned patient ${selectedPatient.first_name} to sonographer ${selectedSonographer.first_name}`);
+    } catch (err) {
+      setError('Failed to assign patient to sonographer');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -16,5 +16,7 @@ urlpatterns = [
 
     path('search-patient/',SearchPatientAPIView.as_view(),name='search-patient'),
     path('search-doctor/',SearchDoctorAPIView.as_view(),name='search-doctor'),
+
+    path('my-notifications/', UserNotificationListAPIView.as_view(), name='my-notifications'),
     
 ]

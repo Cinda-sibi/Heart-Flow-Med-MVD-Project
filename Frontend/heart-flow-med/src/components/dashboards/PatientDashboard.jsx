@@ -96,7 +96,7 @@ const PatientDashboard = () => {
   );
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-2 sm:p-4 md:p-6 space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">My Health Dashboard</h1>
@@ -113,7 +113,7 @@ const PatientDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold mb-2">Upcoming Appointment</h2>
-              <p className="text-blue-100 mb-1">{patientData.nextAppointment.type}</p>
+              <p className="text-blue-100 mb-1">Scheduled</p>
               <p className="text-lg font-medium">
                 {patientData.nextAppointment.date} at {patientData.nextAppointment.time}
               </p>
@@ -129,7 +129,8 @@ const PatientDashboard = () => {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Vital Signs */}
         <InfoCard title="Latest Vital Signs" icon={Activity} color="green">
           <div className="space-y-3">
@@ -172,9 +173,7 @@ const PatientDashboard = () => {
             ))}
           </div>
         </InfoCard>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Test Results */}
         <InfoCard title="Recent Test Results" icon={FileText} color="blue">
           <div className="space-y-3">
@@ -229,7 +228,7 @@ const PatientDashboard = () => {
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <button className="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
             <Calendar className="h-6 w-6 text-blue-600 mb-2" />
             <span className="font-medium text-blue-900">Book Appointment</span>

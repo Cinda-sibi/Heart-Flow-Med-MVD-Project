@@ -160,6 +160,9 @@ class BaseUserSerializer(serializers.ModelSerializer):
             is_verified=False
         )
         return user
+    def create(self, validated_data):
+        role = validated_data.get('role')
+        return self.create_user(validated_data, role=role)
     
 class PatientRegistrationSerializer(BaseUserSerializer):
     date_of_birth = serializers.DateField(required=False, allow_null=True)
@@ -383,11 +386,12 @@ class PatientProfileUpdateSerializer(BaseProfileUpdateSerializer):
     insurance_provider = serializers.CharField(max_length=100, required=False, allow_blank=True)
     insurance_id = serializers.CharField(max_length=50, required=False, allow_blank=True)
     country = serializers.CharField(max_length=55, required=False, allow_blank=True)
+    medical_reference_no = serializers.CharField(max_length=50 , required=False, allow_blank=True)
 
     class Meta(BaseProfileUpdateSerializer.Meta):
         fields = BaseProfileUpdateSerializer.Meta.fields + [
             'date_of_birth', 'gender', 'address', 'emergency_contact',
-            'insurance_provider', 'insurance_id', 'country', 'age'
+            'insurance_provider', 'insurance_id', 'country', 'age','medical_reference_no'
         ]
 
     def update(self, instance, validated_data):
@@ -399,7 +403,7 @@ class PatientProfileUpdateSerializer(BaseProfileUpdateSerializer):
         if patient_profile:
             patient_fields = [
                 'date_of_birth', 'gender', 'address', 'emergency_contact',
-                'insurance_provider', 'insurance_id', 'country', 'age'
+                'insurance_provider', 'insurance_id', 'country', 'age','medical_reference_no'
             ]
             for field in patient_fields:
                 if field in validated_data:
@@ -518,3 +522,18 @@ class AdministrativeStaffProfileUpdateSerializer(BaseProfileUpdateSerializer):
             admin_staff_profile.save()
         
         return instance    
+    
+
+# notification serializer
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            'id',
+            'notification_type',
+            'title',
+            'message',
+            'is_read',
+            'created_at',
+            'appointment'
+        ]

@@ -40,6 +40,16 @@ export const ProfileApis = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Get notifications for the logged-in user
+  getNotifications: async () => {
+    try {
+      const response = await axiosInstance.get('/my-notifications/');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

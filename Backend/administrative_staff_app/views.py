@@ -14,6 +14,8 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from gp_app.models import *
+from collections import defaultdict
 
 # Create your views here.
 # add patients
@@ -29,6 +31,34 @@ class AddPatientView(APIView):
         return custom_404(serializer.errors)
 
 # create doctor availability
+# list doc avialability 
+class AvailabilityList(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        availability = DoctorAvailability.objects.select_related('doctor').all()
+        
+        grouped = defaultdict(list)
+
+        for slot in availability:
+            grouped[slot.doctor.id].append({
+                "day": slot.day,
+                "from_time": slot.from_time.strftime('%H:%M'),
+                "to_time": slot.to_time.strftime('%H:%M')
+            })
+
+        result = []
+        for doctor_id, slots in grouped.items():
+            doctor = DoctorAvailability.objects.filter(doctor__id=doctor_id).first().doctor
+            result.append({
+                "doctor_id": doctor.id,
+                "doctor_name": doctor.get_full_name(),
+                "availabilities": slots
+            })
+
+        return custom_200("Availability listed successfully", result)
+    
+    # create list doctor availability 
 class DoctorAvailabilityListCreate(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -177,3 +207,23 @@ class PatientDetailAPIView(APIView):
         patient = get_object_or_404(PatientProfile, id=patient_id)
         serializer = ListallPatientsSerializer(patient)
         return custom_200("patient profile get successfully",serializer.data)
+    
+
+# update the referral status by staff
+class UpdateReferralStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            referral = PatientReferral.objects.get(id=pk, referred_to=request.user)
+        except PatientReferral.DoesNotExist:
+            return custom_404("Referral not found")
+
+        status = request.data.get("status")
+        if status not in ['Accepted', 'Rejected']:
+            return custom_404("Invalid status")
+
+        referral.status = status
+        referral.save()
+        return custom_200("Referral status updated", {"id": referral.id, "status": referral.status})
+

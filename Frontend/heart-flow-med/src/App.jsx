@@ -14,6 +14,7 @@ import CardiologistDashboard from './components/dashboards/CardiologistDashboard
 import NurseDashboard from './components/dashboards/NurseDashboard';
 import PatientDashboard from './components/dashboards/PatientDashboard';
 import AdministrativestaffDashboard from './components/dashboards/AdministrativestaffDashboard';
+import GeneralPractitionerDashboard from './components/dashboards/GeneralPractitionerDashboard';
 
 // Import shared pages
 import Appointments from './pages/shared/Appointments';
@@ -33,6 +34,12 @@ import CreateDoctorAvailability from './pages/sidebarpages/doctors/CreateDoctorA
 import DoctorAppointments from './pages/sidebarpages/doctors/DoctorAppointments';
 import AssiginingToSonographers from './pages/sidebarpages/doctors/AssiginingToSonographers';
 
+// import sidebars pages general practitioner
+import PatientsReferral from './pages/sidebarpages/gp/PatientsReferral';
+
+// import sidebars pages patients
+import PatientsAppointment from './pages/sidebarpages/patients/PatientsAppointment';
+import PatientsTestResults from './pages/sidebarpages/patients/PatientsTestResults';
 
 // Protected Route Component with role-based routing
 const ProtectedRoute = ({ children }) => {
@@ -60,6 +67,8 @@ const RoleBasedDashboard = () => {
       return <PatientDashboard />;
     case 'Administrative Staff':
       return <AdministrativestaffDashboard />;
+    case 'General Practitioner':
+      return <GeneralPractitionerDashboard />;
     default:
       return <Navigate to="/login" />;
   }
@@ -202,6 +211,34 @@ function AppRoutes() {
         />
       )}
 
+      {/* Patient: Appointments Route */}
+      {user?.role === 'Patient' && (
+        <Route 
+          path="/my-appointments" 
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <PatientsAppointment />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          }
+        />
+      )}
+
+      {/* Patient: Test Results Route */}
+      {user?.role === 'Patient' && (
+        <Route 
+          path="/test-results" 
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <PatientsTestResults />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          }
+        />
+      )}
+
       {/* Administrative Staff: Patients Record Route */}
       {user?.role === 'Administrative Staff' && (
         <Route
@@ -238,6 +275,20 @@ function AppRoutes() {
             <ProtectedRoute>
               <LayoutWrapper>
                 <BillingRecords />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          }
+        />
+      )}
+
+      {/* General Practitioner: Patients Referral Route */}
+      {user?.role === 'General Practitioner' && (
+        <Route
+          path="/patients-referral"
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <PatientsReferral />
               </LayoutWrapper>
             </ProtectedRoute>
           }

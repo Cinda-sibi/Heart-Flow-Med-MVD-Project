@@ -53,6 +53,9 @@ INSTALLED_APPS = [
     'patient_app',
     'doctor_app',
     'administrative_staff_app',
+    'gp_app',
+    'admin_app',
+    'nurse_app',
      'corsheaders',
 ]
 

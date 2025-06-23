@@ -49,7 +49,14 @@ export const fetchDoctorAvailability = async () => {
 };
 
 // Fetch all sonographers
-export const fetchAllSonographers = async (params = {}) => {
-  const response = await axiosInstance.get('/search-sonographer/', { params });
+export const fetchAllSonographers = async () => {
+  const response = await axiosInstance.get('/list-sonographers/');
+  return response.data;
+};
+
+// Assign a patient to a sonographer
+export const assignPatientToSonographer = async (payload) => {
+  // payload: { patient_id, sonographer_id }
+  const response = await axiosInstance.post('/sonography-referral/', payload);
   return response.data;
 };

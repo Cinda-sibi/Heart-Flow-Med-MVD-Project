@@ -23,11 +23,30 @@ const useUserProfile = () => {
     }
   };
 
+  const updateProfile = async (profileData) => {
+    try {
+      setLoading(true);
+      const response = await ProfileApis.updateUserProfile(profileData);
+      if (response.status) {
+        setProfile(response.data);
+        setError(null);
+      } else {
+        setError(response.message);
+      }
+      return response;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update profile');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
   }, []);
 
-  return { profile, loading, error, refetch: fetchProfile };
+  return { profile, loading, error, refetch: fetchProfile, updateProfile };
 };
 
 export default useUserProfile; 
