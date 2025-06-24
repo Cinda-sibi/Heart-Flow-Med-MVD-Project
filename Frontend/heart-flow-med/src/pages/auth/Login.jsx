@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LockClosedIcon, EnvelopeIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import axiosInstance from '../../config/axiosInstance';
 import TokenService from '../../config/tokenService';
+import ProfileApis from '../../apis/ProfileApis';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,15 @@ const Login = () => {
   const [showOTPModal, setShowOTPModal] = useState(false);
   const [loginData, setLoginData] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotStep, setForgotStep] = useState(1); // 1: email, 2: otp+password
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
+  const [forgotError, setForgotError] = useState("");
+  const [forgotSuccess, setForgotSuccess] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -223,9 +233,22 @@ const Login = () => {
             </div> */}
 
             <div className="text-sm">
-              <a href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+              <button
+                type="button"
+                className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
+                onClick={() => {
+                  setShowForgotModal(true);
+                  setForgotStep(1);
+                  setForgotEmail("");
+                  setForgotOtp("");
+                  setForgotNewPassword("");
+                  setForgotConfirmPassword("");
+                  setForgotError("");
+                  setForgotSuccess("");
+                }}
+              >
                 Forgot your password?
-              </a>
+              </button>
             </div>
           </div>
 
@@ -340,6 +363,223 @@ const Login = () => {
                 {isLoading ? 'Sending...' : 'Resend code'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full my-8">
+            <div className="text-center">
+              <div className="mx-auto h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <LockClosedIcon className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900">
+                {forgotStep === 1 ? 'Forgot Password' : 'Reset Password'}
+              </h3>
+              <p className="mt-2 text-sm text-gray-600">
+                {forgotStep === 1
+                  ? 'Enter your email address to receive a verification code.'
+                  : `Enter the code sent to ${forgotEmail} and set your new password.`}
+              </p>
+            </div>
+
+            {forgotError && (
+              <div className="mt-4 bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-700">{forgotError}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {forgotSuccess && (
+              <div className="mt-4 bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707a1 1 0 00-1.414-1.414L9 11.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-green-700">{forgotSuccess}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {forgotStep === 1 && (
+              <form className="mt-6 space-y-6" onSubmit={async (e) => {
+                e.preventDefault();
+                setForgotError("");
+                setForgotSuccess("");
+                setForgotLoading(true);
+                try {
+                  await axiosInstance.post('/forgot-password-request/', { email: forgotEmail });
+                  setForgotSuccess('OTP sent to your email.');
+                  setForgotStep(2);
+                } catch (err) {
+                  const errorMessage = err.response?.data?.detail || err.response?.data?.message || 'Failed to send OTP. Please try again.';
+                  setForgotError(errorMessage);
+                } finally {
+                  setForgotLoading(false);
+                }
+              }}>
+                <div>
+                  <label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email address
+                  </label>
+                  <input
+                    id="forgot-email"
+                    name="forgot-email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="you@example.com"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-between items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotModal(false)}
+                    className="text-sm font-medium text-gray-600 hover:text-gray-500"
+                  >
+                    Back to login
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={forgotLoading || !forgotEmail}
+                    className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${forgotLoading || !forgotEmail ? 'opacity-75 cursor-not-allowed' : ''}`}
+                  >
+                    {forgotLoading ? 'Sending...' : 'Send OTP'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {forgotStep === 2 && (
+              <form className="mt-6 space-y-6" onSubmit={async (e) => {
+                e.preventDefault();
+                setForgotError("");
+                setForgotSuccess("");
+                setForgotLoading(true);
+                try {
+                  await axiosInstance.post('/reset-password/', {
+                    email: forgotEmail,
+                    otp: forgotOtp,
+                    new_password: forgotNewPassword,
+                    confirm_password: forgotConfirmPassword
+                  });
+                  setForgotSuccess('Password reset successful! You can now log in.');
+                  setTimeout(() => {
+                    setShowForgotModal(false);
+                  }, 2000);
+                } catch (err) {
+                  const errorMessage = err.response?.data?.detail || err.response?.data?.message || 'Failed to reset password. Please try again.';
+                  setForgotError(errorMessage);
+                } finally {
+                  setForgotLoading(false);
+                }
+              }}>
+                <div>
+                  <label htmlFor="forgot-otp" className="block text-sm font-medium text-gray-700 mb-1">
+                    Verification Code
+                  </label>
+                  <input
+                    id="forgot-otp"
+                    name="forgot-otp"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]{6}"
+                    maxLength="6"
+                    autoComplete="one-time-code"
+                    required
+                    className="block w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-xl tracking-widest focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="------"
+                    value={forgotOtp}
+                    onChange={(e) => setForgotOtp(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="forgot-new-password" className="block text-sm font-medium text-gray-700 mb-1">
+                    New Password
+                  </label>
+                  <input
+                    id="forgot-new-password"
+                    name="forgot-new-password"
+                    type="password"
+                    required
+                    className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="New password"
+                    value={forgotNewPassword}
+                    onChange={(e) => setForgotNewPassword(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="forgot-confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="forgot-confirm-password"
+                    name="forgot-confirm-password"
+                    type="password"
+                    required
+                    className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Confirm password"
+                    value={forgotConfirmPassword}
+                    onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-between items-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForgotStep(1);
+                      setForgotOtp("");
+                      setForgotNewPassword("");
+                      setForgotConfirmPassword("");
+                      setForgotError("");
+                      setForgotSuccess("");
+                    }}
+                    className="text-sm font-medium text-gray-600 hover:text-gray-500"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={
+                      forgotLoading ||
+                      !forgotOtp ||
+                      !forgotNewPassword ||
+                      !forgotConfirmPassword ||
+                      forgotNewPassword !== forgotConfirmPassword ||
+                      forgotOtp.length !== 6
+                    }
+                    className={`px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                      forgotLoading ||
+                      !forgotOtp ||
+                      !forgotNewPassword ||
+                      !forgotConfirmPassword ||
+                      forgotNewPassword !== forgotConfirmPassword ||
+                      forgotOtp.length !== 6
+                        ? 'opacity-75 cursor-not-allowed'
+                        : ''
+                    }`}
+                  >
+                    {forgotLoading ? 'Resetting...' : 'Reset Password'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

@@ -23,6 +23,7 @@ const useUserProfile = () => {
     }
   };
 
+  // updateProfile can accept either a plain object or FormData (for image upload)
   const updateProfile = async (profileData) => {
     try {
       setLoading(true);

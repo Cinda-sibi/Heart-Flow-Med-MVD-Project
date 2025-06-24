@@ -14,7 +14,12 @@ export const ProfileApis = {
   // Update user profile
   updateUserProfile: async (profileData) => {
     try {
-      const response = await axiosInstance.patch('/update-user-profile/', profileData);
+      let config = {};
+      let data = profileData;
+      if (profileData instanceof FormData) {
+        config.headers = { 'Content-Type': 'multipart/form-data' };
+      }
+      const response = await axiosInstance.patch('/update-user-profile/', data, config);
       return response.data;
     } catch (error) {
       throw error;

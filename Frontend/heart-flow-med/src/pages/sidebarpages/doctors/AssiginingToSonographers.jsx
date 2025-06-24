@@ -291,7 +291,7 @@ const AssiginingToSonographers = () => {
                   );
                 } else if (url.match(/\.(jpg|jpeg|png|gif)$/i)) {
                   return (
-                    <img src={url} alt="Sonography Report" className="max-h-[400px] rounded border" />
+                    <img src={`http://localhost:8000${url}`} alt="Sonography Report" className="max-h-[400px] rounded border" />
                   );
                 } else {
                   return (

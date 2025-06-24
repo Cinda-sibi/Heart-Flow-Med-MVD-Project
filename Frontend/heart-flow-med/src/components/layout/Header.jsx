@@ -4,7 +4,7 @@ import useUserProfile from '../../hooks/useUserProfile';
 import { Link, useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import { useState } from 'react';
-import { ProfileApis } from '../../apis/ProfileApis';
+import ProfileApis from '../../apis/ProfileApis';
 
 const Header = ({ setSidebarOpen }) => {
   const { user, logout } = useAuth();

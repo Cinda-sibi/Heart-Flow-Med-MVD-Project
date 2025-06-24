@@ -344,6 +344,8 @@ class UpdateUserProfileAPIView(APIView):
             serializer = SonographerProfileUpdateSerializer(user, data=request.data, partial=True)
         elif user.role == 'Administrative Staff':
             serializer = AdministrativeStaffProfileUpdateSerializer(user, data=request.data, partial=True)
+        elif user.role == 'General Practitioner' :
+            serializer = BaseProfileUpdateSerializer(user , data=request.data , partial = True)   
         else:
             return custom_404("Profile update not supported for this role")
 
@@ -367,3 +369,22 @@ class UserNotificationListAPIView(APIView):
         notifications.filter(is_read=False).update(is_read=True)
         serializer = NotificationSerializer(notifications, many=True)
         return  custom_200("Notifications listed successfully",serializer.data)
+    
+
+
+# forgot password 
+class ForgotPasswordRequestAPIView(APIView):
+    def post(self, request):
+        serializer = ForgotPasswordRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return custom_200("OTP sent to your email")
+        return custom_404(serializer.errors)
+
+class ResetPasswordAPIView(APIView):
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return custom_200("Password reset successful")
+        return custom_404(serializer.errors)

@@ -18,5 +18,8 @@ urlpatterns = [
     path('search-doctor/',SearchDoctorAPIView.as_view(),name='search-doctor'),
 
     path('my-notifications/', UserNotificationListAPIView.as_view(), name='my-notifications'),
+# forgot password 
+    path('forgot-password-request/', ForgotPasswordRequestAPIView.as_view(),name='forgot-password-request'),
+    path('reset-password/', ResetPasswordAPIView.as_view(),name='reset-password'),
     
 ]

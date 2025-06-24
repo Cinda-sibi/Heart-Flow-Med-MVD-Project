@@ -182,10 +182,10 @@ class PatientRegistrationSerializer(BaseUserSerializer):
 
     def create(self, validated_data):
         patient_data = {
-            'date_of_birth': validated_data.pop('date_of_birth'),
-            'gender': validated_data.pop('gender'),
-            'address': validated_data.pop('address'),
-            'emergency_contact': validated_data.pop('emergency_contact'),
+            'date_of_birth': validated_data.pop('date_of_birth','2002-09-01'),
+            'gender': validated_data.pop('gender',''),
+            'address': validated_data.pop('address',''),
+            'emergency_contact': validated_data.pop('emergency_contact',''),
             'insurance_provider': validated_data.pop('insurance_provider', ''),
             'insurance_id': validated_data.pop('insurance_id', ''),
             'country': validated_data.pop('country', ''),
@@ -215,7 +215,7 @@ class CardiologistRegistrationSerializer(BaseUserSerializer):
 
     def create(self, validated_data):
         doctor_data = {
-            'date_of_birth': validated_data.pop('date_of_birth'),
+            'date_of_birth': validated_data.pop('date_of_birth','2025-09-12'),
             'gender': validated_data.pop('gender'),
             'address': validated_data.pop('address'),
             'emergency_contact': validated_data.pop('emergency_contact'),
@@ -295,7 +295,80 @@ class SonographerRegistrationSerializer(BaseUserSerializer):
         SonographerProfile.objects.create(user=user, certification=certification)
         return user
 
+# forgot password 
+class ForgotPasswordRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
 
+    def validate_email(self, value):
+        if not ProfileUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No user is associated with this email.")
+        return value
+
+    def save(self):
+        email = self.validated_data['email']
+        try:
+            user = ProfileUser.objects.get(email=email)
+        except ProfileUser.DoesNotExist:
+            raise serializers.ValidationError("User not found.")
+
+        # Generate and store OTP secret
+        secret = pyotp.random_base32()
+        user.otp_secret = secret
+        user.save()
+        cache.set(f"otp_secret_{email}", secret, timeout=600)
+
+        # Generate OTP using pyotp
+        totp = pyotp.TOTP(secret)
+        otp = totp.now()
+
+        # Send email with OTP
+        send_mail(
+            subject="Your OTP for Password Reset",
+            message=f"Your OTP is {otp}. It will expire in 10 minutes.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+        )
+
+        return user
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(write_only=True, min_length=6)
+    confirm_password = serializers.CharField(write_only=True, min_length=6)
+
+    def validate(self, data):
+        email = data['email']
+        otp = data['otp']
+        new_password = data['new_password']
+        confirm_password = data['confirm_password']
+
+        if new_password != confirm_password:
+            raise serializers.ValidationError("New password and confirm password do not match.")
+
+        try:
+            user = ProfileUser.objects.get(email=email)
+        except ProfileUser.DoesNotExist:
+            raise serializers.ValidationError("User not found.")
+
+        secret = user.otp_secret or cache.get(f"otp_secret_{email}")
+        if not secret:
+            raise serializers.ValidationError("OTP expired or invalid.")
+
+        totp = pyotp.TOTP(secret)
+        if not totp.verify(otp ,valid_window=2):
+            raise serializers.ValidationError("Invalid OTP.")
+
+        data['user'] = user
+        return data
+
+    def save(self):
+        user = self.validated_data['user']
+        new_password = self.validated_data['new_password']
+        user.set_password(new_password)
+        user.otp_secret = None  # Clear OTP secret
+        user.save()
+        return user
 
 
 
@@ -385,15 +458,17 @@ class BaseProfileUpdateSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(required=False, allow_blank=True)
     last_name = serializers.CharField(required=False, allow_blank=True)
     phone = serializers.CharField(required=False, allow_blank=True)
+    user_images = serializers.ImageField(required=False,allow_null=True)
 
     class Meta:
         model = ProfileUser
-        fields = ['first_name', 'last_name', 'phone']
+        fields = ['first_name', 'last_name', 'phone','user_images']
 
     def update(self, instance, validated_data):
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.phone = validated_data.get('phone', instance.phone)
+        instance.user_images = validated_data.get('phone', instance.user_images)
         instance.save()
         return instance
 
