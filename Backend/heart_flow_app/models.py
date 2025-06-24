@@ -68,6 +68,7 @@ class PatientProfile(models.Model):
     age = models.IntegerField(null=True,blank=True)
     allergies = models.ManyToManyField(Allergy, blank=True)
     medical_reference_no = models.CharField(max_length=50,null=True,blank=True)
+    id_records = models.FileField(upload_to='patient_id_records/',null=True,blank=True)
 
     def __str__(self):
         return f"{self.user.first_name}-{self.user.last_name}"

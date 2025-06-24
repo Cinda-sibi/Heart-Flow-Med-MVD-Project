@@ -68,9 +68,10 @@ class SonographyReferralSerializer(serializers.ModelSerializer):
 
 
 class SonographyReferralReportSerializer(serializers.ModelSerializer):
+    notes = serializers.CharField(max_length =500,required=False,allow_null = True)
     class Meta:
         model = SonographyReferral
-        fields = ['id', 'report', 'status']
+        fields = ['id', 'report', 'notes','status']
         read_only_fields = ['id']
 
 

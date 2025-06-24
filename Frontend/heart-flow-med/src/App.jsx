@@ -15,6 +15,7 @@ import NurseDashboard from './components/dashboards/NurseDashboard';
 import PatientDashboard from './components/dashboards/PatientDashboard';
 import AdministrativestaffDashboard from './components/dashboards/AdministrativestaffDashboard';
 import GeneralPractitionerDashboard from './components/dashboards/GeneralPractitionerDashboard';
+import SonographersDashboard from './components/dashboards/SonographersDashboard';
 
 // Import shared pages
 import Appointments from './pages/shared/Appointments';
@@ -41,6 +42,9 @@ import PatientsReferral from './pages/sidebarpages/gp/PatientsReferral';
 // import sidebars pages patients
 import PatientsAppointment from './pages/sidebarpages/patients/PatientsAppointment';
 import PatientsTestResults from './pages/sidebarpages/patients/PatientsTestResults';
+
+
+import SonoPatientReferral from './pages/sidebarpages/sonographers/SonoPatientReferral';
 
 // Protected Route Component with role-based routing
 const ProtectedRoute = ({ children }) => {
@@ -70,6 +74,8 @@ const RoleBasedDashboard = () => {
       return <AdministrativestaffDashboard />;
     case 'General Practitioner':
       return <GeneralPractitionerDashboard />;
+    case 'Sonographer':
+      return <SonographersDashboard />;
     default:
       return <Navigate to="/login" />;
   }
@@ -291,6 +297,19 @@ function AppRoutes() {
             <ProtectedRoute>
               <LayoutWrapper>
                 <PatientsReferral />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          }
+        />
+      )}
+        {/* Sonographer: Patients Referral Route */}
+        {user?.role === 'Sonographer' && (
+        <Route
+          path="/sonographers-dashboard"
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <SonoPatientReferral />
               </LayoutWrapper>
             </ProtectedRoute>
           }

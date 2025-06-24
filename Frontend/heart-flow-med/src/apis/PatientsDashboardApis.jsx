@@ -36,12 +36,19 @@ export const listDoctorAvailabilities = async () => {
   return response.data;
 };
 
+// List all doctor availabilities (new endpoint)
+export const listAllDoctorAvailabilities = async () => {
+  const response = await axiosInstance.get('/list-avilability/');
+  return response.data;
+};
+
 // Export a default object with all APIs for convenience
 const PatientsDashboardApis = {
   fetchUpcomingAppointments,
   listPatientAppointments,
   bookAppointment,
   listDoctorAvailabilities,
+  listAllDoctorAvailabilities,
 };
 
 export default PatientsDashboardApis;

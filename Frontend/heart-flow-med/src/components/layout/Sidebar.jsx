@@ -40,7 +40,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         return [
           ...commonItems,
           { name: 'My Patients', href: '/my-patients', icon: Users },
-          { name: 'Create Doctors Availability', href: '/create-doctors-availability', icon: ActivityIcon },
+          { name: 'Create Availability', href: '/create-doctors-availability', icon: ActivityIcon },
           { name: 'My Appointments', href: '/doctor-appointments', icon: Calendar },
           // { name: 'Medical Records', href: '/records', icon: FileText },
           { name: 'Assign Sonographers', href: '/assign-sonographers', icon: ClipboardList },
@@ -79,6 +79,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
          
         
         ];
+      case 'Sonographer':
+        return [
+          ...commonItems,
+          { name: 'Referrals', href: '/sonographers-dashboard', icon: ClipboardList },
+        ];
       default:
         return commonItems;
     }
@@ -90,7 +95,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const SidebarContent = (
     <div className="flex flex-col h-full bg-gray-800 w-64">
       <div className="flex items-center flex-shrink-0 px-4 py-4">
-        <Heart className="h-8 w-8 text-white" />
+        <Heart className="h-8 w-8 text-red-500" />
         <span className="ml-2 text-xl font-semibold text-white">Heart Flow Med</span>
       </div>
       <nav className="mt-5 flex-1 px-2 space-y-1 overflow-y-auto">

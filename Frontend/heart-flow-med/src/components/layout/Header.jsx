@@ -1,7 +1,7 @@
 import { Bell, Search, User, LogOut, Settings, Menu } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import useUserProfile from '../../hooks/useUserProfile';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import { useState } from 'react';
 import { ProfileApis } from '../../apis/ProfileApis';
@@ -14,6 +14,7 @@ const Header = ({ setSidebarOpen }) => {
   const [notifications, setNotifications] = useState([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifError, setNotifError] = useState(null);
+  const navigate = useNavigate();
 
   const getRoleSpecificInfo = () => {
     if (!profile) return null;
@@ -70,6 +71,11 @@ const Header = ({ setSidebarOpen }) => {
   };
 
   const closeNotifModal = () => setIsNotifModalOpen(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
@@ -179,7 +185,7 @@ const Header = ({ setSidebarOpen }) => {
                     <Settings className="h-5 w-5" />
                   </Link>
                   <button
-                    onClick={logout}
+                    onClick={handleLogout}
                     className="p-1 text-gray-400 hover:text-red-600"
                   >
                     <LogOut className="h-5 w-5" />

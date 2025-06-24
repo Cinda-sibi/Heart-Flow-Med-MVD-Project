@@ -7,6 +7,7 @@ class DoctorAvailability(models.Model):
     day_of_week = models.CharField(max_length=10, choices=[('Monday','Monday'), ('Tuesday','Tuesday'), ('Wednesday','Wednesday'), ('Thursday','Thursday'), ('Friday','Friday'), ('Saturday','Saturday'), ('Sunday','Sunday')])
     start_time = models.TimeField()
     end_time = models.TimeField()
+    date = models.DateField(null=True,blank=True)
 
     def __str__(self):
         return f"{self.doctor.first_name} - {self.day_of_week} ({self.start_time} to {self.end_time})"

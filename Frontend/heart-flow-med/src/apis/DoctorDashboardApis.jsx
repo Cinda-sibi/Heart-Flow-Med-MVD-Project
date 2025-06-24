@@ -66,3 +66,21 @@ export const fetchPatientsByLoginDoctor = async () => {
   const response = await axiosInstance.get('/list-patients-by-login-doc/');
   return response.data;
 };
+
+// Update doctor availability
+export const updateDoctorAvailability = async (pk, payload) => {
+  const response = await axiosInstance.patch(`/update-availability/${pk}/`, payload);
+  return response.data;
+};
+
+// List sonography referrals
+export const fetchSonographyReferrals = async () => {
+  const response = await axiosInstance.get('/sonography-referral/');
+  return response.data;
+};
+
+// Fetch a sonography report by referral_id
+export const fetchSonographyReport = async (referral_id) => {
+  const response = await axiosInstance.get(`/sonography-report/${referral_id}/`);
+  return response.data;
+};

@@ -12,6 +12,7 @@ class SonographyReferral(models.Model):
     status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Completed', 'Completed')], default='Pending')
     notes = models.TextField(blank=True, null=True)
     report = models.FileField(upload_to='sonography_reports/', null=True, blank=True)  # optional upload
+    created_at = models.DateTimeField(auto_now_add=True,null=True ,blank=True)
 
     def __str__(self):
         return f"{self.patient.get_full_name()} → {self.sonographer.get_full_name()}"

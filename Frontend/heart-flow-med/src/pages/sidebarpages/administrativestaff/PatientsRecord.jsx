@@ -8,18 +8,13 @@ const PatientsRecord = () => {
   const [allPatients, setAllPatients] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState({
-    email: '',
     first_name: '',
     last_name: '',
-    phone: '',
-    date_of_birth: '',
+    email: '',
     gender: '',
-    address: '',
-    emergency_contact: '',
-    insurance_provider: '',
-    insurance_id: '',
-    country: '',
-    password: ''
+    age: '',
+    medical_reference_no: '',
+    id_records: null
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -61,25 +56,25 @@ const PatientsRecord = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setForm({
-      email: '',
       first_name: '',
       last_name: '',
-      phone: '',
-      date_of_birth: '',
+      email: '',
       gender: '',
-      address: '',
-      emergency_contact: '',
-      insurance_provider: '',
-      insurance_id: '',
-      country: '',
-      password: ''
+      age: '',
+      medical_reference_no: '',
+      id_records: null
     });
     setError('');
     setSuccess('');
   };
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, files } = e.target;
+    if (type === 'file') {
+      setForm({ ...form, [name]: files[0] });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -88,25 +83,7 @@ const PatientsRecord = () => {
     setError('');
     setSuccess('');
     try {
-      // Compose payload as required by API
-      const payload = {
-        user: {
-          email: form.email,
-          first_name: form.first_name,
-          last_name: form.last_name,
-          phone: form.phone,
-          role: 'Patient',
-          password: form.password
-        },
-        date_of_birth: form.date_of_birth,
-        gender: form.gender,
-        address: form.address,
-        emergency_contact: form.emergency_contact,
-        insurance_provider: form.insurance_provider,
-        insurance_id: form.insurance_id,
-        country: form.country
-      };
-      await addPatient(payload);
+      await addPatient(form);
       setSuccess('Patient added successfully!');
       fetchPatients();
       setTimeout(() => {
@@ -114,7 +91,6 @@ const PatientsRecord = () => {
       }, 1000);
     } catch (err) {
       console.error('Add patient error:', err);
-      // Try to extract backend error message
       let message = 'Failed to add patient.';
       if (err.response && err.response.data) {
         if (typeof err.response.data === 'string') {
@@ -122,7 +98,6 @@ const PatientsRecord = () => {
         } else if (err.response.data.detail) {
           message = err.response.data.detail;
         } else if (typeof err.response.data === 'object') {
-          // Show first error in object
           const firstKey = Object.keys(err.response.data)[0];
           if (firstKey) {
             message = `${firstKey}: ${err.response.data[firstKey]}`;
@@ -279,14 +254,6 @@ const PatientsRecord = () => {
               <input type="email" name="email" value={form.email} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="Enter email" required disabled={loading} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Phone</label>
-              <input type="text" name="phone" value={form.phone} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="Enter phone number" required disabled={loading} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Date of Birth</label>
-              <input type="date" name="date_of_birth" value={form.date_of_birth} onChange={handleChange} className="w-full border rounded px-3 py-2" required disabled={loading} />
-            </div>
-            <div>
               <label className="block text-sm font-medium mb-1">Gender</label>
               <select name="gender" value={form.gender} onChange={handleChange} className="w-full border rounded px-3 py-2" required disabled={loading}>
                 <option value="">Select Gender</option>
@@ -295,29 +262,17 @@ const PatientsRecord = () => {
                 <option value="Other">Other</option>
               </select>
             </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium mb-1">Address</label>
-              <input type="text" name="address" value={form.address} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="Enter address" required disabled={loading} />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium mb-1">Emergency Contact</label>
-              <input type="text" name="emergency_contact" value={form.emergency_contact} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="Enter emergency contact" required disabled={loading} />
+            <div>
+              <label className="block text-sm font-medium mb-1">Age</label>
+              <input type="number" name="age" value={form.age} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="Enter age" required disabled={loading} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Insurance Provider</label>
-              <input type="text" name="insurance_provider" value={form.insurance_provider} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="Enter insurance provider" disabled={loading} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Insurance ID</label>
-              <input type="text" name="insurance_id" value={form.insurance_id} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="Enter insurance ID" disabled={loading} />
+              <label className="block text-sm font-medium mb-1">Medical Reference No</label>
+              <input type="text" name="medical_reference_no" value={form.medical_reference_no} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="Enter medical reference no" required disabled={loading} />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium mb-1">Country</label>
-              <input type="text" name="country" value={form.country} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="Enter country" required disabled={loading} />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium mb-1">Password</label>
-              <input type="password" name="password" value={form.password} onChange={handleChange} className="w-full border rounded px-3 py-2" placeholder="Enter password" required disabled={loading} />
+              <label className="block text-sm font-medium mb-1">ID Records (Upload file)</label>
+              <input type="file" name="id_records" accept=".pdf,.jpg,.jpeg,.png" onChange={handleChange} className="w-full border rounded px-3 py-2" disabled={loading} />
             </div>
           </div>
           {error && <div className="text-red-600 text-sm">{error}</div>}

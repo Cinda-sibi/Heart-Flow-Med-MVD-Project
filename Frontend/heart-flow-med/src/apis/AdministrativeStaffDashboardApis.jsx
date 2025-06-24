@@ -16,7 +16,21 @@ export const bookAppointment = async (payload) => {
 };
 
 export const addPatient = async (payload) => {
-  const response = await axiosInstance.post('/patient-registration/', payload);
+  const formData = new FormData();
+  formData.append('first_name', payload.first_name);
+  formData.append('last_name', payload.last_name);
+  formData.append('email', payload.email);
+  formData.append('gender', payload.gender);
+  formData.append('age', payload.age);
+  formData.append('medical_reference_no', payload.medical_reference_no);
+  if (payload.id_records) {
+    formData.append('id_records', payload.id_records);
+  }
+  const response = await axiosInstance.post('/add-patient/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };
 
@@ -52,4 +66,8 @@ export const searchPatient = async (params) => {
 export const getPatientById = async (patientId) => {
   const response = await axiosInstance.get(`/get-patient-by-id/${patientId}/`);
   return response.data;
+};
+
+export const getDoctorAvailabilityById = async (doctorId) => {
+  return await axiosInstance.get(`/doctor-availability-by-id/${doctorId}/`);
 };

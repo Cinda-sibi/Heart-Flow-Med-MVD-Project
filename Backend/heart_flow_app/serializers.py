@@ -282,7 +282,7 @@ class NurseRegistrationSerializer(BaseUserSerializer):
         return user
     
 class SonographerRegistrationSerializer(BaseUserSerializer):
-    certification = serializers.CharField(max_length=100)
+    certification = serializers.CharField(max_length=100,required = False ,allow_blank = True)
 
     class Meta(BaseUserSerializer.Meta):
         fields = BaseUserSerializer.Meta.fields + [
@@ -290,7 +290,7 @@ class SonographerRegistrationSerializer(BaseUserSerializer):
         ]
 
     def create(self, validated_data):
-        certification = validated_data.pop('certification')
+        certification = validated_data.pop('certification','')
         user = self.create_user(validated_data, role='Sonographer')
         SonographerProfile.objects.create(user=user, certification=certification)
         return user

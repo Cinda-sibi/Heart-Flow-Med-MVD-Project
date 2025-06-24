@@ -264,6 +264,22 @@ class SonographyReferralView(APIView):
             return custom_200("Referral created",serializer.data)
         return custom_404(serializer.errors)
     
+    # latest 3 sonographer referral list 
+class LatestSonographyReferralsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        if user.role == 'Sonographer':
+            referrals = SonographyReferral.objects.filter(sonographer=user).order_by('-created_at')[:3]
+        elif user.role == 'Cardiologist':
+            referrals = SonographyReferral.objects.filter(doctor=user).order_by('-created_at')[:3]
+        else:
+            referrals = SonographyReferral.objects.none()
+
+        serializer = SonographyReferralSerializer(referrals, many=True)
+        return custom_200("Latest 3 referrals fetched successfully", serializer.data)
 
 # upload report as sonographer for patient 
 class SonographyReportUploadView(APIView):
@@ -302,6 +318,25 @@ class SonographerListAPIView(APIView):
         serializer = SonographerListSerializer(sonographers, many=True)
         return custom_200("Sonographers listed successfully",serializer.data)
     
+
+# list sonography report file
+class SonographyReportByReferralView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, referral_id):
+        try:
+            referral = SonographyReferral.objects.get(id=referral_id)
+        except SonographyReferral.DoesNotExist:
+            return custom_404("Referral not found")
+
+        # Check if report is uploaded (status = Completed or report_file exists)
+        if referral.status != "Completed" or not referral.report:
+            return custom_404("No report uploaded for this referral yet")
+
+        serializer = SonographyReferralReportSerializer(referral)
+        return custom_200("Sonography report retrieved successfully", serializer.data)
+
+
 
 # prescription by doctor 
 # class WritePrescriptionAPIView(APIView):
@@ -379,9 +414,9 @@ class WritePrescriptionAPIView(APIView):
 
         # If high severity interaction exists, optionally block saving
         # If you want to block, uncomment below:
-        # if any(w['severity'] == 'High' for w in interaction_warnings):
-        #     return Response({"error": "High severity drug interaction detected", "interactions": interaction_warnings},
-        #                     status=status.HTTP_400_BAD_REQUEST)
+        if any(w['severity'] == 'High' for w in interaction_warnings):
+            return Response({"error": "High severity drug interaction detected", "interactions": interaction_warnings},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         # Save prescription
         prescription = serializer.save()

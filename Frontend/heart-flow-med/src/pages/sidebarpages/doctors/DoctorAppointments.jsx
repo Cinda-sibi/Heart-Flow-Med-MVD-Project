@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAllDoctorAppointments, fetchDoctorAvailability } from '../../../apis/DoctorDashboardApis';
-import { User, Calendar, Clock, Search } from 'lucide-react';
+import { User, Calendar, Clock, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
@@ -163,6 +163,45 @@ const DoctorAppointments = () => {
     );
   };
 
+  // Custom Toolbar for Calendar
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  function CustomToolbar({ label, onNavigate, date }) {
+    const currentYear = date.getFullYear();
+    const currentMonth = date.getMonth();
+    const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
+    return (
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <button onClick={() => onNavigate('PREV')} className="p-2 hover:bg-gray-100 rounded">
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <select
+          value={currentMonth}
+          onChange={e => onNavigate('DATE', new Date(currentYear, Number(e.target.value), 1))}
+          className="border rounded px-2 py-1"
+        >
+          {months.map((m, idx) => (
+            <option key={m} value={idx}>{m}</option>
+          ))}
+        </select>
+        <select
+          value={currentYear}
+          onChange={e => onNavigate('DATE', new Date(Number(e.target.value), currentMonth, 1))}
+          className="border rounded px-2 py-1"
+        >
+          {years.map(y => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+        <button onClick={() => onNavigate('NEXT')} className="p-2 hover:bg-gray-100 rounded">
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-4">My Appointments & Availability</h1>
@@ -293,6 +332,7 @@ const DoctorAppointments = () => {
                 views={['month']}
                 defaultView="month"
                 components={{
+                  toolbar: CustomToolbar,
                   event: ({ event }) => (
                     <span>
                       <b>{event.title}</b>

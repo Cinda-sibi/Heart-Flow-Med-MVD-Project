@@ -22,7 +22,7 @@ from collections import defaultdict
 class AddPatientView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
-        serializer = PatientRegistrationSerializer(data=request.data)
+        serializer = PatientRegistrationByAdministrativeStaffSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
         
@@ -30,8 +30,41 @@ class AddPatientView(APIView):
             return custom_200("Patient registered successfully")
         return custom_404(serializer.errors)
 
-# create doctor availability
-# list doc avialability 
+# create doctor availability 
+# list doc availability by doctor id 
+class DoctorAvailabilityByDocIdView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, doctor_id):
+        try:
+            doctor = ProfileUser.objects.get(id=doctor_id, role='Cardiologist')
+        except ProfileUser.DoesNotExist:
+            return custom_404("Doctor not found")
+
+        availability = DoctorAvailability.objects.filter(doctor=doctor).order_by('day_of_week', 'start_time')
+        if not availability.exists():
+            return custom_404("No availability slots found for this doctor")
+
+        slots = [
+            {
+                "day": slot.day_of_week,
+                "start_time": slot.start_time.strftime('%I:%M %p'),
+                "end_time": slot.end_time.strftime('%I:%M %p'),
+                "date": slot.date.strftime('%Y-%m-%d') if slot.date else None
+            }
+            for slot in availability
+        ]
+
+        return custom_200(
+            "Doctor availability fetched successfully",
+            {
+                "doctor_id": doctor.id,
+                "doctor_name": doctor.get_full_name(),
+                "availabilities": slots
+            }
+        )
+    
+    # list all doc availability 
 class AvailabilityList(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -42,9 +75,9 @@ class AvailabilityList(APIView):
 
         for slot in availability:
             grouped[slot.doctor.id].append({
-                "day": slot.day,
-                "from_time": slot.from_time.strftime('%H:%M'),
-                "to_time": slot.to_time.strftime('%H:%M')
+                "day": slot.day_of_week,
+                "start_time": slot.start_time.strftime('%I:%M %p'),
+                "end_time": slot.end_time.strftime('%I:%M %p')
             })
 
         result = []
@@ -101,6 +134,61 @@ class DoctorLeaveCreate(APIView):
             serializer.save()
             return custom_200("Leave created", serializer.data)
         return custom_404(serializer.errors)
+
+
+# update delete doctor availabilty 
+class DoctorAvailabilityUpdateDelete(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+      try:
+          availability = DoctorAvailability.objects.get(pk=pk)
+      except DoctorAvailability.DoesNotExist:
+          return custom_404("Availability not found.")
+     
+      user = request.user  # Already a ProfileUser
+      is_admin_staff = user.role == "Administrative Staff"
+     
+      # Check if the doctor matches
+      is_doctor_owner = availability.doctor == user  # because doctor is a ForeignKey to ProfileUser
+     
+      if not is_admin_staff and not is_doctor_owner:
+          return custom_404("You are not authorized to modify this availability.")
+     
+      serializer = DoctorAvailabilitySerializer(availability, data=request.data, partial=True)
+      if serializer.is_valid():
+          serializer.save()
+          return custom_200("Availability partially updated", serializer.data)
+      return custom_404(serializer.errors)
+     
+
+    def delete(self, request, pk):
+        try:
+            availability = DoctorAvailability.objects.get(pk=pk)
+        except DoctorAvailability.DoesNotExist:
+            return custom_404("Availability not found.")
+
+        try:
+            profile_user = request.user.profileuser
+        except:
+            return custom_404("User profile not found.")
+
+        is_admin_staff = profile_user.role == "Administrative Staff"
+
+        # If not admin, check if the logged-in user is the assigned doctor
+        is_doctor_owner = False
+        try:
+            doctor_profile = DoctorProfile.objects.get(user=request.user)
+            is_doctor_owner = availability.doctor == doctor_profile
+        except DoctorProfile.DoesNotExist:
+            is_doctor_owner = False
+
+        if not is_admin_staff and not is_doctor_owner:
+            return custom_404("You are not authorized to delete this availability.")
+
+        # Authorized - proceed to delete
+        availability.delete()
+        return custom_200("Availability deleted successfully", {})
 
 
 
