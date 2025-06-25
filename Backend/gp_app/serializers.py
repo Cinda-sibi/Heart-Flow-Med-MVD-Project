@@ -35,6 +35,7 @@ class AdministrativeStaffProfileSerializer(serializers.ModelSerializer):
 # serializer for patient referral
 class PatientReferralSerializer(serializers.ModelSerializer):
     referred_by_name = serializers.CharField(source='referred_by.get_full_name', read_only=True)
+    referred_to = serializers.CharField(required=False , allow_blank=True)
 
     class Meta:
         model = PatientReferral

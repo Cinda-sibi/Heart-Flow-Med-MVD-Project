@@ -251,6 +251,7 @@ const Register = () => {
               UserIcon,
               true,
               [
+                { value: 'Admin', label: 'Admin' },
                 { value: 'Patient', label: 'Patient' },
                 { value: 'Cardiologist', label: 'Doctor (Cardiologist)' },
                 { value: 'Administrative Staff', label: 'Administrative Staff' },

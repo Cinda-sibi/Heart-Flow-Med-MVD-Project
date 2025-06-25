@@ -30,7 +30,9 @@ class RoleBasedRegistrationAPIView(APIView):
         elif role == 'Sonographer':
             serializer = SonographerRegistrationSerializer(data=request.data)
         elif role == 'General Practitioner':
-            serializer =  BaseUserSerializer(data=request.data)   
+            serializer =  BaseUserSerializer(data=request.data)
+        elif role == 'Admin':
+            serializer =  BaseUserSerializer(data=request.data)       
         else:
             return custom_404('Unsupported role')
 

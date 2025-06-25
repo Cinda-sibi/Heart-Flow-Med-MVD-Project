@@ -16,7 +16,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from gp_app.models import *
 from collections import defaultdict
-
+from gp_app.serializers import *
 # Create your views here.
 # add patients
 class AddPatientView(APIView):
@@ -315,3 +315,17 @@ class UpdateReferralStatusView(APIView):
         referral.save()
         return custom_200("Referral status updated", {"id": referral.id, "status": referral.status})
 
+
+# list referral 
+
+class StaffReferralListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role != 'Admin Staff':
+            return custom_404("Only Admin Staff can view this referral list")
+
+        referrals = PatientReferral.objects.filter(referred_to=user)
+        serializer = PatientReferralSerializer(referrals, many=True)
+        return custom_200("Referrals assigned to you listed successfully", serializer.data)

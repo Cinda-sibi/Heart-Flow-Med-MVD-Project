@@ -14,6 +14,7 @@ const Header = ({ setSidebarOpen }) => {
   const [notifications, setNotifications] = useState([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifError, setNotifError] = useState(null);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const getRoleSpecificInfo = () => {
@@ -72,9 +73,18 @@ const Header = ({ setSidebarOpen }) => {
 
   const closeNotifModal = () => setIsNotifModalOpen(false);
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setIsLogoutModalOpen(false);
     logout();
     navigate('/login');
+  };
+
+  const handleLogoutCancel = () => {
+    setIsLogoutModalOpen(false);
   };
 
   return (
@@ -138,6 +148,27 @@ const Header = ({ setSidebarOpen }) => {
           )}
         </div>
       </Modal>
+      {/* Logout Confirmation Modal */}
+      <Modal isOpen={isLogoutModalOpen} onClose={handleLogoutCancel}>
+        <div className="flex flex-col items-center space-y-4 p-4">
+          <div className="text-lg font-semibold">Confirm Logout</div>
+          <div className="text-gray-600">Are you sure you want to log out?</div>
+          <div className="flex space-x-4 mt-2">
+            <button
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              onClick={handleLogoutConfirm}
+            >
+              Yes
+            </button>
+            <button
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              onClick={handleLogoutCancel}
+            >
+              No
+            </button>
+          </div>
+        </div>
+      </Modal>
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Hamburger for mobile */}
@@ -185,7 +216,7 @@ const Header = ({ setSidebarOpen }) => {
                     <Settings className="h-5 w-5" />
                   </Link>
                   <button
-                    onClick={handleLogout}
+                    onClick={handleLogoutClick}
                     className="p-1 text-gray-400 hover:text-red-600"
                   >
                     <LogOut className="h-5 w-5" />

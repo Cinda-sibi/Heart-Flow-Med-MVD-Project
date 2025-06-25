@@ -3,5 +3,6 @@ from . views import *
 
 urlpatterns = [
     path('list-administrative-staffs/', AdministrativeStaffListAPIView.as_view(), name='list-administrative-staff-list'),
-    path('patient-referral/',PatientReferralListCreateAPIView.as_view(),name='patient-referral')
+    path('patient-referral/',PatientReferralListCreateAPIView.as_view(),name='patient-referral'),
+    path('list-recent-referrals/',RecentPatientReferralsAPIView.as_view(),name='list-recent-referrals'),
 ]

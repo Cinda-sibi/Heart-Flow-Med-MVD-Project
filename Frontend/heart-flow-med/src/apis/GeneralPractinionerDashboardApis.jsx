@@ -11,3 +11,8 @@ export const getAdministrativeStaffList = () => {
 export const getPatientReferrals = () => {
   return axiosInstance.get('/patient-referral/');
 };
+
+
+export const getRecentPatientReferrals = () => {
+  return axiosInstance.get('/list-recent-referrals/');
+};

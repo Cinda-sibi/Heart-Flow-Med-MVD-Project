@@ -38,7 +38,7 @@ class PatientReferralListCreateAPIView(APIView):
             referrals = PatientReferral.objects.all()
 
         serializer = PatientReferralSerializer(referrals, many=True)
-        return custom_200("Patients referral listed successfully",serializer.data)
+        return custom_200("Patients referral listed successfully", serializer.data)
 
     def post(self, request):
         if request.user.role != 'General Practitioner':
@@ -47,6 +47,7 @@ class PatientReferralListCreateAPIView(APIView):
         data = request.data.copy()
         serializer = PatientReferralSerializer(data=data)
         if serializer.is_valid():
+            # Save without referred_to
             referral = serializer.save(referred_by=request.user)
 
             # Generate PDF
@@ -81,8 +82,6 @@ class PatientReferralListCreateAPIView(APIView):
             p.setFont("Helvetica", 12)
             line -= 20
             p.drawString(70, line, f"Referred By (GP): {referral.referred_by.get_full_name()} ({referral.referred_by.email})")
-            line -= 20
-            p.drawString(70, line, f"Referred To: {referral.referred_to.get_full_name()}")
 
             line -= 40
             p.drawString(50, line, "Reason for Referral:")
@@ -100,9 +99,15 @@ class PatientReferralListCreateAPIView(APIView):
             pdf_file = buffer.getvalue()
             buffer.close()
 
-            # Send email to Admin Staff
+            # Fetch all Admin and Administrative Staff users
+            admin_staff_users = ProfileUser.objects.filter(
+                role__in=["Admin", "Administrative Staff"]
+            ).distinct()
+
+            # Email content
+            email_subject = "New Patient Referral"
             email_body = f"""
-Dear {referral.referred_to.first_name},
+Dear Staff,
 
 You have received a new referral from GP {referral.referred_by.get_full_name()} ({referral.referred_by.email}).
 
@@ -114,26 +119,45 @@ Reason:
 {referral.reason}
 
 Please find the attached PDF for full details.
-            """
+"""
 
-            email = EmailMessage(
-                subject="New Patient Referral",
-                body=email_body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[referral.referred_to.email]
-            )
-            email.attach(f"referral-{referral.id}.pdf", pdf_file, "application/pdf")
-            email.send()
+            email_recipients = list(admin_staff_users.values_list('email', flat=True))
 
-            # Create notification for admin staff
-            Notification.objects.create(
-                user=referral.referred_to,
-                notification_type='referral_received',
-                title='New Referral Received',
-                message=f"You have received a referral for patient {referral.patient_first_name} {referral.patient_last_name} from GP {referral.referred_by.get_full_name()}",
-                is_read=False
-            )
-            
+            if email_recipients:
+                email = EmailMessage(
+                    subject=email_subject,
+                    body=email_body,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=email_recipients
+                )
+                email.attach(f"referral-{referral.id}.pdf", pdf_file, "application/pdf")
+                email.send()
 
-            return custom_200("Referral submitted successfully",referral.id)
+            # Create notifications for all admin and staff
+            for user in admin_staff_users:
+                Notification.objects.create(
+                    user=user,
+                    notification_type='referral_received',
+                    title='New Referral Received',
+                    message=f"Referral received for patient {referral.patient_first_name} {referral.patient_last_name} from GP {referral.referred_by.get_full_name()}",
+                    is_read=False
+                )
+
+            return custom_200("Referral submitted successfully", referral.id)
         return custom_404(serializer.errors)
+    
+
+# recent 3 referrals of the patient 
+class RecentPatientReferralsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # GPs see only their own referrals
+        if request.user.role == 'General Practitioner':
+            referrals = PatientReferral.objects.filter(referred_by=request.user).order_by('-referred_at')[:3]
+        else:
+            # Admins and others see all
+            referrals = PatientReferral.objects.all().order_by('-referred_at')[:3]
+
+        serializer = PatientReferralSerializer(referrals, many=True)
+        return custom_200("Recent 3 referrals retrieved successfully", serializer.data)

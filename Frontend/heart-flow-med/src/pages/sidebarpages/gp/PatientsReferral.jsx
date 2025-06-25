@@ -133,27 +133,27 @@ const PatientsReferral = () => {
   };
 
   return (
-    <div className="p-2 sm:p-6 md:p-10 space-y-12 bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
+    <div className="p-2 sm:p-6 md:p-10 space-y-12 bg-gray-100 min-h-screen">
       {/* Page Header */}
-      <div className="max-w-4xl mx-auto text-center mb-8">
-        <h1 className="text-4xl font-extrabold text-blue-900 flex items-center justify-center gap-3 mb-2">
-          <FaUserPlus className="text-blue-500" /> Patient Referral
+      {/* <div className="max-w-4xl mx-auto text-center mb-8">
+        <h1 className="text-4xl font-extrabold text-gray-900 flex items-center justify-center gap-3 mb-2">
+          <FaUserPlus className="text-blue-600" /> Patient Referral History
         </h1>
-        <p className="text-lg text-blue-700">Easily refer patients to administrative staff and track your referral history.</p>
-      </div>
+        <p className="text-lg text-gray-600">Easily refer patients to administrative staff and track your referral history.</p>
+      </div> */}
 
       {/* Referral Form Card */}
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-blue-200">
-          <div className="bg-gradient-to-r from-blue-400 to-blue-600 px-10 py-8">
-            <h2 className="text-3xl font-bold text-white text-center tracking-tight flex items-center justify-center gap-2">
-              <FaUserFriends className="text-blue-100" /> Patient Referral Form
+      {/* <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
+          <div className="bg-gray-100 px-10 py-8">
+            <h2 className="text-3xl font-bold text-gray-900 text-center tracking-tight flex items-center justify-center gap-2">
+              <FaUserFriends className="text-blue-600" /> Patient Referral Form
             </h2>
-            <p className="text-blue-100 text-center mt-2 text-lg">
+            <p className="text-gray-600 text-center mt-2 text-lg">
               Refer patients to administrative staff members
             </p>
           </div>
-          <div className="px-10 py-8 bg-blue-50">
+          <div className="px-10 py-8 bg-white">
             {success && (
               <div className="mb-6 p-4 bg-green-100 border border-green-300 rounded-lg flex items-center gap-3">
                 <svg className="h-6 w-6 text-green-500" viewBox="0 0 20 20" fill="currentColor">
@@ -170,23 +170,23 @@ const PatientsReferral = () => {
                 <span className="text-red-900 font-semibold">{error}</span>
               </div>
             )}
-            <form onSubmit={handleSubmit} className="space-y-10">
+            <form onSubmit={handleSubmit} className="space-y-10"> */}
               {/* Section: Staff Selection */}
-              <div>
+              {/* <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <FaUserFriends className="text-blue-500" />
-                  <h3 className="text-lg font-bold text-blue-700">Referral Details</h3>
+                  <FaUserFriends className="text-blue-600" />
+                  <h3 className="text-lg font-bold text-gray-900">Referral Details</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="col-span-1 md:col-span-2">
-                    <label className="block text-sm font-semibold text-blue-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Referred To <span className="text-red-500">*</span>
                     </label>
                     <select
                       name="referred_to"
                       value={form.referred_to}
                       onChange={handleChange}
-                      className="w-full border border-blue-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
                       required
                     >
                       <option value="">Select Staff Member</option>
@@ -198,16 +198,16 @@ const PatientsReferral = () => {
                     </select>
                   </div>
                 </div>
-              </div>
+              </div> */}
               {/* Section: Patient Info */}
-              <div>
+              {/* <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <FaUserPlus className="text-blue-500" />
-                  <h3 className="text-lg font-bold text-blue-700">Patient Information</h3>
+                  <FaUserPlus className="text-blue-600" />
+                  <h3 className="text-lg font-bold text-gray-900">Patient Information</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-blue-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       First Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -215,13 +215,13 @@ const PatientsReferral = () => {
                       name="patient_first_name"
                       value={form.patient_first_name}
                       onChange={handleChange}
-                      className="w-full border border-blue-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
                       placeholder="Enter first name"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-blue-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Last Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -229,22 +229,22 @@ const PatientsReferral = () => {
                       name="patient_last_name"
                       value={form.patient_last_name}
                       onChange={handleChange}
-                      className="w-full border border-blue-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
                       placeholder="Enter last name"
                       required
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
               {/* Section: Contact Info */}
-              <div>
+              {/* <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <FaInfoCircle className="text-blue-500" />
-                  <h3 className="text-lg font-bold text-blue-700">Contact Information</h3>
+                  <FaInfoCircle className="text-blue-600" />
+                  <h3 className="text-lg font-bold text-gray-900">Contact Information</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-blue-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Email Address <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -252,13 +252,13 @@ const PatientsReferral = () => {
                       name="patient_email"
                       value={form.patient_email}
                       onChange={handleChange}
-                      className="w-full border border-blue-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
                       placeholder="patient@example.com"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-blue-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Phone Number <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -266,29 +266,29 @@ const PatientsReferral = () => {
                       name="patient_phone"
                       value={form.patient_phone}
                       onChange={handleChange}
-                      className="w-full border border-blue-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
                       placeholder="+1234567890"
                       required
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
               {/* Section: Patient Details */}
-              <div>
+              {/* <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <FaInfoCircle className="text-blue-500" />
-                  <h3 className="text-lg font-bold text-blue-700">Patient Details</h3>
+                  <FaInfoCircle className="text-blue-600" />
+                  <h3 className="text-lg font-bold text-gray-900">Patient Details</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-blue-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Gender
                     </label>
                     <select
                       name="gender"
                       value={form.gender}
                       onChange={handleChange}
-                      className="w-full border border-blue-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
                     >
                       {genderOptions.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -298,7 +298,7 @@ const PatientsReferral = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-blue-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Age
                     </label>
                     <input
@@ -306,35 +306,35 @@ const PatientsReferral = () => {
                       name="age"
                       value={form.age}
                       onChange={handleChange}
-                      className="w-full border border-blue-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white"
                       placeholder="Enter age"
                       min="0"
                       max="150"
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
               {/* Section: Reason for Referral */}
-              <div>
+              {/* <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <FaInfoCircle className="text-blue-500" />
-                  <h3 className="text-lg font-bold text-blue-700">Reason for Referral</h3>
+                  <FaInfoCircle className="text-blue-600" />
+                  <h3 className="text-lg font-bold text-gray-900">Reason for Referral</h3>
                 </div>
                 <textarea
                   name="reason"
                   value={form.reason}
                   onChange={handleChange}
-                  className="w-full border border-blue-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 resize-none bg-white"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 resize-none bg-white"
                   rows={4}
                   placeholder="Please provide detailed reason for referral..."
                   required
                 />
-              </div>
+              </div> */}
               {/* Submit Button */}
-              <div className="pt-4">
+              {/* <div className="pt-4">
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-4 px-6 rounded-xl hover:from-blue-700 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl"
+                  className="w-full bg-blue-600 text-white py-4 px-6 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl"
                   disabled={loading}
                 >
                   {loading ? (
@@ -353,46 +353,50 @@ const PatientsReferral = () => {
             </form>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Referral List Card */}
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-blue-200">
-          <div className="px-10 py-8 border-b border-blue-200 bg-gradient-to-r from-blue-100 to-blue-200 sticky top-0 z-10">
-            <h2 className="text-2xl font-bold text-blue-900 flex items-center gap-2">
-              <FaUserFriends className="text-blue-500" /> My Patient Referrals
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
+          <div className="px-10 py-8 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <FaUserFriends className="text-blue-600" /> My Patient Referrals
             </h2>
-            <p className="text-blue-700 text-base mt-1">All patients you have referred are listed below.</p>
+            <p className="text-gray-600 text-base mt-1">All patients you have referred are listed below.</p>
           </div>
-          <div className="px-4 md:px-10 py-8 bg-blue-50">
+          <div className="px-4 md:px-10 py-8 bg-white">
             {referralsLoading ? (
               <div className="text-center text-blue-600 text-lg">Loading referrals...</div>
             ) : referralsError ? (
               <div className="text-center text-red-600 text-lg">{referralsError}</div>
             ) : referrals.length === 0 ? (
-              <div className="text-center text-blue-700 text-lg">No referrals found.</div>
+              <div className="text-center text-gray-700 text-lg">No referrals found.</div>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-blue-200">
-                <table className="min-w-full divide-y divide-blue-200 text-sm">
-                  <thead className="bg-blue-200 sticky top-0 z-10">
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
-                      <th className="px-6 py-3 text-left font-semibold text-blue-800 uppercase tracking-wider">Patient Name</th>
-                      <th className="px-6 py-3 text-left font-semibold text-blue-800 uppercase tracking-wider">Email</th>
-                      <th className="px-6 py-3 text-left font-semibold text-blue-800 uppercase tracking-wider">Phone</th>
-                      <th className="px-6 py-3 text-left font-semibold text-blue-800 uppercase tracking-wider">Referred To</th>
-                      <th className="px-6 py-3 text-left font-semibold text-blue-800 uppercase tracking-wider">Reason</th>
-                      <th className="px-6 py-3 text-left font-semibold text-blue-800 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left font-semibold text-gray-800 uppercase tracking-wider">Patient Name</th>
+                      <th className="px-6 py-3 text-left font-semibold text-gray-800 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-3 text-left font-semibold text-gray-800 uppercase tracking-wider">Phone</th>
+                      {/* <th className="px-6 py-3 text-left font-semibold text-gray-800 uppercase tracking-wider">Referred To</th> */}
+                      <th className="px-6 py-3 text-left font-semibold text-gray-800 uppercase tracking-wider">Referred Date</th>
+                      <th className="px-6 py-3 text-left font-semibold text-gray-800 uppercase tracking-wider">Reason</th>
+                      <th className="px-6 py-3 text-left font-semibold text-gray-800 uppercase tracking-wider">Status</th>
+                      
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-blue-100">
+                  <tbody className="bg-white divide-y divide-gray-100">
                     {referrals.map((ref, idx) => (
-                      <tr key={ref.id} className={idx % 2 === 0 ? 'bg-white hover:bg-blue-100 transition' : 'bg-blue-50 hover:bg-blue-100 transition'}>
+                      <tr key={ref.id} className={idx % 2 === 0 ? 'bg-white hover:bg-gray-100 transition' : 'bg-gray-50 hover:bg-gray-100 transition'}>
                         <td className="px-6 py-4 whitespace-nowrap font-medium">{ref.patient_first_name} {ref.patient_last_name}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{ref.patient_email}</td>
                         <td className="px-6 py-4 whitespace-nowrap">{ref.patient_phone}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{ref.referred_to_name || ref.referred_to}</td>
+                        {/* <td className="px-6 py-4 whitespace-nowrap">{ref.referred_to_name || ref.referred_to}</td> */}
+                        <td className="px-6 py-4 whitespace-nowrap">{ref.referred_at ? new Date(ref.referred_at).toLocaleString() : '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap max-w-xs truncate" title={ref.reason}>{ref.reason}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{ref.created_at ? new Date(ref.created_at).toLocaleString() : '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap max-w-xs truncate" title={ref.status}>{ref.status}</td>
+                     
                       </tr>
                     ))}
                   </tbody>

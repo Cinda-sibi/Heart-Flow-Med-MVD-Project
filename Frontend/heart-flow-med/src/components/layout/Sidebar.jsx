@@ -60,11 +60,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
           { name: 'My Appointments', href: '/my-appointments', icon: Calendar },
           { name: 'Medical History', href: '/medical-history', icon: FileText },
           { name: 'Test Results', href: '/test-results', icon: Activity },
-          { name: 'Billing History', href: '/billing-records', icon: FileText },
+          // { name: 'Billing History', href: '/billing-records', icon: FileText },
         ];
       case 'Administrative Staff':
         return [
           ...commonItems,
+          // { name: 'Patients Referrals', href: '/patients-referral', icon: Users },
           { name: 'Patients Record', href: '/patients-record', icon: Users },
           { name: 'Doctors Availability', href: '/doctors-availability', icon: ActivityIcon },
           { name: 'Appointments', href: '/appointments', icon: Calendar },
@@ -74,7 +75,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       case 'General Practitioner':
         return [
           ...commonItems,
-          { name: 'Patients Referral', href: '/patients-referral', icon: Users },
+          { name: 'Referral History', href: '/patients-referral', icon: Users },
           // { name: 'Patients Record', href: '/patients-record', icon: FileText },
          
         
@@ -95,7 +96,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const SidebarContent = (
     <div className="flex flex-col h-full bg-gray-800 w-64">
       <div className="flex items-center flex-shrink-0 px-4 py-4">
-        <Heart className="h-8 w-8 text-red-500" />
+        <Heart className="h-8 w-8 text-white" />
         <span className="ml-2 text-xl font-semibold text-white">Heart Flow Med</span>
       </div>
       <nav className="mt-5 flex-1 px-2 space-y-1 overflow-y-auto">
