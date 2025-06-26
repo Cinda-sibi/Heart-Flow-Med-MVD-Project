@@ -36,6 +36,7 @@ AUTH_USER_MODEL = 'heart_flow_app.ProfileUser'
 
 
 CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:8000",
     "http://localhost:5173",  # Your Vite/React dev server
 ]
 

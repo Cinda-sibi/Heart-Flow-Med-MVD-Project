@@ -468,7 +468,7 @@ class BaseProfileUpdateSerializer(serializers.ModelSerializer):
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.phone = validated_data.get('phone', instance.phone)
-        instance.user_images = validated_data.get('phone', instance.user_images)
+        instance.user_images = validated_data.get('user_images', instance.user_images)
         instance.save()
         return instance
 

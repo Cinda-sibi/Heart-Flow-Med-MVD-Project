@@ -15,6 +15,7 @@ class PatientReferral(models.Model):
     patient_phone = models.CharField(max_length=20, null=True, blank=True)
     gender = models.CharField(max_length=10, null=True, blank=True)
     age = models.IntegerField(null=True, blank=True)
+    symptoms = models.TextField(null=True , blank=True)
     reason = models.TextField(null=True, blank=True)
     referred_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
@@ -30,6 +31,11 @@ class PatientReferral(models.Model):
         blank=True,
         help_text="Link to actual PatientProfile once created"
     )
+    transcription = models.TextField(null=True, blank=True)
+    summary = models.TextField(null=True, blank=True)
+    audio_file = models.FileField(upload_to='patient_referral_audios/', null=True, blank=True)
+    referral_pdf = models.FileField(upload_to='referral_pdf/',null=True , blank=True)
+    doctor_notes = models.TextField(null=True , blank=True)
 
     def __str__(self):
         return f"{self.patient_first_name} {self.patient_last_name} referred by {self.referred_by.get_full_name()}"

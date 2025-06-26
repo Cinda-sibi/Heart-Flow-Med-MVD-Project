@@ -36,6 +36,9 @@ class AdministrativeStaffProfileSerializer(serializers.ModelSerializer):
 class PatientReferralSerializer(serializers.ModelSerializer):
     referred_by_name = serializers.CharField(source='referred_by.get_full_name', read_only=True)
     referred_to = serializers.CharField(required=False , allow_blank=True)
+    transcription = serializers.CharField(required=False , allow_blank=True)
+    summary = serializers.CharField(required=False , allow_blank=True)
+    audio_file = serializers.FileField(required=False , allow_null=True)
 
     class Meta:
         model = PatientReferral
@@ -51,8 +54,13 @@ class PatientReferralSerializer(serializers.ModelSerializer):
             'gender',
             'age',
             'reason',
+            'symptoms',
             'referred_at',
             'status',
-            'linked_patient'
+            'linked_patient',
+            'transcription',
+            'summary',
+            'audio_file',
+            'referral_pdf',
         ]
-        read_only_fields = ['referred_at', 'linked_patient','referred_by','referred_by_name']
+        read_only_fields = ['referred_at', 'linked_patient','referred_by','referred_by_name','referral_pdf']
