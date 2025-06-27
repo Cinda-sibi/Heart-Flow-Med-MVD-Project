@@ -2,6 +2,7 @@ from rest_framework import serializers
 from heart_flow_app.models import *
 from  patient_app.serializers import ProfileUserSerializer
 from . models import *
+from gp_app.models import *
 
 class AppointmentListSerializer(serializers.ModelSerializer):
     patient_name = serializers.SerializerMethodField()
@@ -94,3 +95,11 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         for item in items_data:
             PrescriptionItem.objects.create(prescription=prescription, **item)
         return prescription
+
+
+
+class DoctorNotesUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatientReferral
+        fields = ['doctor_notes','status']
+        read_only_fields = ['status']

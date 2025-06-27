@@ -6,14 +6,15 @@ from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from heart_flow_app.models import *
 from django.conf import settings
+from gp_app.models import *
 
 
 class PatientRegistrationByAdministrativeStaffSerializer(serializers.Serializer):
     first_name = serializers.CharField()
     last_name = serializers.CharField()
     email = serializers.EmailField()
-    gender = serializers.CharField()
-    age = serializers.IntegerField()
+    gender = serializers.CharField(required=False,allow_blank=True)
+    age = serializers.IntegerField(required=False,allow_null=True)
     medical_reference_no = serializers.CharField()
     id_records = serializers.FileField(required=False, allow_null=True)
 
@@ -34,13 +35,20 @@ class PatientRegistrationByAdministrativeStaffSerializer(serializers.Serializer)
         )
 
         # Create associated PatientProfile
-        PatientProfile.objects.create(
+        patient_profile = PatientProfile.objects.create(
             user=user,
             gender=validated_data['gender'],
             age=validated_data['age'],
             medical_reference_no=validated_data['medical_reference_no'],
             id_records=validated_data.get('id_records', None),
         )
+        try:
+         referral = PatientReferral.objects.get(patient_email=user.email, linked_patient__isnull=True)
+         referral.linked_patient = patient_profile
+         referral.is_accepted = True
+         referral.save()
+        except PatientReferral.DoesNotExist:
+          pass
 
         # Send email with raw password
         send_mail(

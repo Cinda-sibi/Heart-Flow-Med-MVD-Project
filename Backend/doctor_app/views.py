@@ -15,6 +15,9 @@ from datetime import datetime, timedelta
 from django.utils.timezone import now
 from rest_framework.parsers import MultiPartParser, FormParser
 from administrative_staff_app.serializers import *
+from gp_app.serializers import *
+from django.db.models import Q
+
 # Create your views here.
 
 
@@ -111,7 +114,38 @@ class ListPatientsByDoctors(APIView):
         # Serialize and return
         serializer = PatientProfileSerializer(unique_patients, many=True)
         return custom_200("Patients listed successfully",serializer.data)
-    
+
+
+
+
+# doctors patient details by patient id 
+class DoctorPatientDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        doctor = request.user
+
+        # Ensure the user is a doctor
+        if doctor.role != 'Cardiologist':
+            return custom_404("Only doctors can access this data.")
+
+        # Check if this patient has any appointment with this doctor
+        try:
+            appointment = Appointment.objects.filter(
+                doctor=doctor,
+                patient__patientprofile__id=patient_id
+            ).latest('date', 'time')  # any matching appointment, using latest
+
+            patient_profile = appointment.patient.patientprofile
+        except Appointment.DoesNotExist:
+            return custom_404("Patient not found or not associated with this doctor.")
+        except PatientProfile.DoesNotExist:
+            return custom_404("Patient profile does not exist.")
+
+        # Serialize and return
+        serializer = PatientProfileSerializer(patient_profile)
+        return custom_200("Patient details retrieved successfully", serializer.data)
+
 # list todays appointments of doctor
 class ListTodaysAppointments(APIView):
     permission_classes = [IsAuthenticated]
@@ -426,3 +460,70 @@ class WritePrescriptionAPIView(APIView):
             "data": PrescriptionSerializer(prescription).data,
             "interactions": interaction_warnings
         }, status=status.HTTP_201_CREATED)
+
+
+
+# adding notes to the referrals of patient and sending to the Admin for booking appointment
+class AddDoctorNotesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, referral_id):
+        try:
+            referral = PatientReferral.objects.get(id=referral_id)
+        except PatientReferral.DoesNotExist:
+            return custom_404("Referral not found.")
+
+        # Check if the logged-in user is the referred doctor
+        if request.user.role != 'Cardiologist':
+            return custom_404("You are not authorized to add notes to this referral.")
+        
+        # if referral.status == 'Pending':
+        #     data = request.data.copy()
+        #     data['status'] = 'Ongoing'
+        # else:
+        #     data = request.data
+
+        serializer = DoctorNotesUpdateSerializer(referral,data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            if referral.status == 'Pending':
+                referral.status = 'Ongoing'
+                referral.save()
+            return custom_200("Doctor notes added successfully.",serializer.data)
+        return custom_404(serializer.errors)
+    
+
+# list the referrals by status Ongoing and pending 
+class ReferralListByStatusAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, status):
+        status = status.capitalize()
+
+        if status not in ['Ongoing', 'Pending']:
+            return Response({"detail": "Invalid status. Must be 'Ongoing' or 'Pending'."}, status=400)
+
+        base_filter = {}
+        if request.user.role == 'General Practitioner':
+            base_filter['referred_by'] = request.user
+
+        if status == 'Pending':
+            # status=Pending OR (status=Ongoing AND linked_patient is NULL)
+            referrals = PatientReferral.objects.filter(
+                Q(status='Pending') |
+                Q(status='Ongoing', linked_patient__isnull=True),
+                **base_filter
+            ).order_by('-referred_at')
+
+        elif status == 'Ongoing':
+            # Only Ongoing with linked_patient is not null
+            referrals = PatientReferral.objects.filter(
+                status='Ongoing',
+                linked_patient__isnull=False,
+                **base_filter
+            ).order_by('-referred_at')
+
+        serializer = PatientReferralSerializer(referrals, many=True)
+        return custom_200(f"Referrals with status '{status}' listed successfully", serializer.data)
+
+

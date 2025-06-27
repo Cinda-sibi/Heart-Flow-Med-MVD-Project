@@ -39,6 +39,7 @@ class PatientReferralSerializer(serializers.ModelSerializer):
     transcription = serializers.CharField(required=False , allow_blank=True)
     summary = serializers.CharField(required=False , allow_blank=True)
     audio_file = serializers.FileField(required=False , allow_null=True)
+    medical_reference_no = serializers.CharField(required=False , allow_blank=True)
 
     class Meta:
         model = PatientReferral
@@ -58,6 +59,9 @@ class PatientReferralSerializer(serializers.ModelSerializer):
             'referred_at',
             'status',
             'linked_patient',
+            'doctor_notes',
+            'medical_reference_no',
+            'is_accepted',
             'transcription',
             'summary',
             'audio_file',

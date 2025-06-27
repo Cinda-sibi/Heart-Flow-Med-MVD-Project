@@ -15,12 +15,13 @@ class PatientReferral(models.Model):
     patient_phone = models.CharField(max_length=20, null=True, blank=True)
     gender = models.CharField(max_length=10, null=True, blank=True)
     age = models.IntegerField(null=True, blank=True)
+    medical_reference_no =  models.CharField(max_length=70,null=True ,blank=True)
     symptoms = models.TextField(null=True , blank=True)
     reason = models.TextField(null=True, blank=True)
     referred_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=20,
-        choices=[('Pending', 'Pending'), ('Accepted', 'Accepted'), ('Rejected', 'Rejected')],
+        choices=[('Pending', 'Pending'), ('Accepted', 'Accepted'), ('Rejected', 'Rejected'),('Ongoing', 'Ongoing')],
         default='Pending'
     )
 
@@ -36,6 +37,7 @@ class PatientReferral(models.Model):
     audio_file = models.FileField(upload_to='patient_referral_audios/', null=True, blank=True)
     referral_pdf = models.FileField(upload_to='referral_pdf/',null=True , blank=True)
     doctor_notes = models.TextField(null=True , blank=True)
+    is_accepted = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.patient_first_name} {self.patient_last_name} referred by {self.referred_by.get_full_name()}"

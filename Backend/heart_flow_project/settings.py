@@ -57,7 +57,8 @@ INSTALLED_APPS = [
     'gp_app',
     'admin_app',
     'nurse_app',
-     'corsheaders',
+    'corsheaders',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

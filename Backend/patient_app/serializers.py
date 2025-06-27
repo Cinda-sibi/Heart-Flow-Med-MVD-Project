@@ -26,6 +26,7 @@ class PatientProfileSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
        user_data = validated_data.pop('user', None)  # Safely get 'user'
    
+   
        if user_data:
            for attr, value in user_data.items():
                setattr(instance.user, attr, value)
