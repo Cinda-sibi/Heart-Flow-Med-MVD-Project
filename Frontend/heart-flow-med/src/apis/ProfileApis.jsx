@@ -55,6 +55,16 @@ export const ProfileApis = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Change password
+  changePassword: async (data) => {
+    try {
+      const response = await axiosInstance.post('/change-password/', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

@@ -46,6 +46,9 @@ import PatientsTestResults from './pages/sidebarpages/patients/PatientsTestResul
 
 import SonoPatientReferral from './pages/sidebarpages/sonographers/SonoPatientReferral';
 
+import UserManagement  from './pages/sidebarpages/admin/UserManagement';
+import AppointmentBooking from './pages/sidebarpages/admin/AppointmentBooking';
+
 // Protected Route Component with role-based routing
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -141,7 +144,20 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <LayoutWrapper>
-                <Users />
+                <UserManagement />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
+        />
+      )}
+       {/* Role-specific Protected Routes */}
+       {user?.role === 'Admin' && (
+        <Route 
+          path="/book-appointments" 
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <AppointmentBooking />
               </LayoutWrapper>
             </ProtectedRoute>
           } 

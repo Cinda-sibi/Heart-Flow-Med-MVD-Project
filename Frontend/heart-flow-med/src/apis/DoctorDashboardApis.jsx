@@ -84,3 +84,27 @@ export const fetchSonographyReport = async (referral_id) => {
   const response = await axiosInstance.get(`/sonography-report/${referral_id}/`);
   return response.data;
 };
+
+// PATCH doctor notes to a referral
+export const addDoctorNotesToReferral = async (referralId, doctorNotes) => {
+  const response = await axiosInstance.patch(`/add-notes-by-doc/${referralId}/`, { doctor_notes: doctorNotes });
+  return response.data;
+};
+
+// Fetch referrals by status
+export const fetchReferralsByStatus = async (status) => {
+  const response = await axiosInstance.get(`/referrals-by-status/${status}/`);
+  return response.data;
+};
+
+// Register a patient (add patient)
+export const addPatient = async (payload) => {
+  const response = await axiosInstance.post('/add-patient/', payload);
+  return response.data;
+};
+
+// Fetch patient details by patient ID
+export const fetchPatientById = async (patientId) => {
+  const response = await axiosInstance.get(`/doc-patient-by-id/${patientId}/`);
+  return response.data;
+};

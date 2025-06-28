@@ -59,6 +59,21 @@ class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
 
+
+
+
+
+# change password serilaizer
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=8)
+    confirm_password = serializers.CharField(required=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError("New password and confirm password do not match.")
+        return data
+
 # doctor registration serializer
 # class CardiologistRegistrationSerializer(serializers.ModelSerializer):
 #     emergency_contact = serializers.CharField(max_length=100)
@@ -263,8 +278,8 @@ class AdministrativeStaffRegistrationSerializer(BaseUserSerializer):
         AdministrativeStaffProfile.objects.create(user=user, **staff_data)
         return user
 class NurseRegistrationSerializer(BaseUserSerializer):
-    department = serializers.CharField(max_length=100)
-    shift = serializers.CharField(max_length=50)
+    department = serializers.CharField(max_length=100,required = False ,allow_blank = True)
+    shift = serializers.CharField(max_length=50,required = False ,allow_blank = True)
 
     class Meta(BaseUserSerializer.Meta):
         fields = BaseUserSerializer.Meta.fields + [
@@ -273,8 +288,8 @@ class NurseRegistrationSerializer(BaseUserSerializer):
 
     def create(self, validated_data):
         nurse_data = {
-            'department': validated_data.pop('department'),
-            'shift': validated_data.pop('shift')
+            'department': validated_data.pop('department',''),
+            'shift': validated_data.pop('shift','')
         }
 
         user = self.create_user(validated_data, role='Nurse')

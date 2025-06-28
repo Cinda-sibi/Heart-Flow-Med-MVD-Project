@@ -102,10 +102,10 @@ const Profile = () => {
         insurance_provider: profile.profile?.insurance_provider || '',
         insurance_id: profile.profile?.insurance_id || '',
         unique_id: profile.profile?.unique_id || '',
-        user_images: profile.user_images || '',
+        user_images: profile.user_images || null,
         // Add other fields as needed
       });
-      setImagePreview(profile.user_images ? profile.user_images : null);
+      setImagePreview(profile.user_images || null);
       setImageFile(null);
     }
   }, [profile]);
@@ -203,9 +203,9 @@ const Profile = () => {
       insurance_provider: profile.profile?.insurance_provider || '',
       insurance_id: profile.profile?.insurance_id || '',
       unique_id: profile.profile?.unique_id || '',
-      user_images: profile.user_images || '',
+      user_images: profile.user_images || null,
     });
-    setImagePreview(profile.user_images ? profile.user_images : null);
+    setImagePreview(profile.user_images || null);
     setImageFile(null);
     setStatus({ message: '', type: '' });
   };

@@ -15,6 +15,15 @@ const Header = ({ setSidebarOpen }) => {
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifError, setNotifError] = useState(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [changePasswordForm, setChangePasswordForm] = useState({
+    old_password: '',
+    new_password: '',
+    confirm_password: '',
+  });
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+  const [changePasswordError, setChangePasswordError] = useState(null);
+  const [changePasswordSuccess, setChangePasswordSuccess] = useState(null);
   const navigate = useNavigate();
 
   const getRoleSpecificInfo = () => {
@@ -87,6 +96,55 @@ const Header = ({ setSidebarOpen }) => {
     setIsLogoutModalOpen(false);
   };
 
+  const handleChangePasswordClick = () => {
+    setIsChangePasswordModalOpen(true);
+  };
+
+  const closeChangePasswordModal = () => {
+    setIsChangePasswordModalOpen(false);
+    setChangePasswordForm({
+      old_password: '',
+      new_password: '',
+      confirm_password: '',
+    });
+    setChangePasswordLoading(false);
+    setChangePasswordError(null);
+    setChangePasswordSuccess(null);
+  };
+
+  const handleChangePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setChangePasswordLoading(true);
+    setChangePasswordError(null);
+    setChangePasswordSuccess(null);
+
+    if (changePasswordForm.new_password !== changePasswordForm.confirm_password) {
+      setChangePasswordError('New passwords do not match.');
+      setChangePasswordLoading(false);
+      return;
+    }
+
+    try {
+      await ProfileApis.changePassword({
+        old_password: changePasswordForm.old_password,
+        new_password: changePasswordForm.new_password,
+        confirm_password: changePasswordForm.confirm_password,
+      });
+      setChangePasswordSuccess('Password changed successfully!');
+      setTimeout(() => {
+        closeChangePasswordModal();
+      }, 1500);
+    } catch (err) {
+      setChangePasswordError(
+        err?.response?.data?.detail ||
+        err?.response?.data?.message ||
+        'Failed to change password.'
+      );
+    } finally {
+      setChangePasswordLoading(false);
+    }
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       {/* Modal for user profile */}
@@ -109,6 +167,48 @@ const Header = ({ setSidebarOpen }) => {
               {getRoleSpecificInfo()}
             </>
           )}
+          <form onSubmit={handleChangePasswordSubmit} className="w-80 p-2 flex flex-col gap-4">
+            <div className="text-lg font-semibold text-center">Change Password</div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Current Password</label>
+              <input
+                type="password"
+                className="w-full border border-gray-300 rounded px-3 py-2"
+                value={changePasswordForm.old_password}
+                onChange={e => setChangePasswordForm(f => ({ ...f, old_password: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">New Password</label>
+              <input
+                type="password"
+                className="w-full border border-gray-300 rounded px-3 py-2"
+                value={changePasswordForm.new_password}
+                onChange={e => setChangePasswordForm(f => ({ ...f, new_password: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Confirm New Password</label>
+              <input
+                type="password"
+                className="w-full border border-gray-300 rounded px-3 py-2"
+                value={changePasswordForm.confirm_password}
+                onChange={e => setChangePasswordForm(f => ({ ...f, confirm_password: e.target.value }))}
+                required
+              />
+            </div>
+            {changePasswordError && <div className="text-red-600 text-sm">{changePasswordError}</div>}
+            {changePasswordSuccess && <div className="text-green-600 text-sm">{changePasswordSuccess}</div>}
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors font-semibold"
+              disabled={changePasswordLoading}
+            >
+              {changePasswordLoading ? 'Changing...' : 'Change Password'}
+            </button>
+          </form>
         </div>
       </Modal>
       {/* Notifications Modal */}

@@ -133,6 +133,31 @@ class RoleBasedRegistrationAPIView(APIView):
 #             return custom_200("Administrative staff  registered successfully. Please verify your email with OTP.")
 #         return custom_404(serializer.errors)
 
+# change password api
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        user = request.user
+
+        if serializer.is_valid():
+            old_password = serializer.validated_data['old_password']
+            new_password = serializer.validated_data['new_password']
+
+            if not user.check_password(old_password):
+                return custom_404("Old password is incorrect.")
+
+            if old_password == new_password:
+                return custom_404("New password cannot be the same as old password.")
+
+            user.set_password(new_password)
+            user.save()
+            return custom_200("Password updated successfully.")
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 # login api based on roles
 class UserLoginAPIView(APIView):
