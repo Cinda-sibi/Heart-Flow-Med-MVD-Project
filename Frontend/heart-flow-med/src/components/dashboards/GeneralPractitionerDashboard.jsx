@@ -191,7 +191,7 @@ const GeneralPractitioner = () => {
   const fetchTranscriptionAndSummary = async (audioBlob) => {
     try {
       const formData = new FormData();
-      formData.append('audio_file', audioBlob, 'patient_referral.wav');
+      formData.append('file', audioBlob, 'patient_referral.wav');
       // You may want to use a dedicated endpoint for just transcription if available
       const response = await referPatientReferral(formData);
       if (response.data) {
@@ -286,7 +286,7 @@ const GeneralPractitioner = () => {
       }
       // Create FormData to include audio file and transcription
       const formData = new FormData();
-      formData.append('audio_file', audioRecording.audioBlob, 'patient_referral.wav');
+      formData.append('file', audioRecording.audioBlob, 'patient_referral.wav');
       formData.append('transcription', audioRecording.transcription);
       Object.keys(audioForm).forEach(key => {
         formData.append(key, audioForm[key]);
@@ -324,8 +324,8 @@ const GeneralPractitioner = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
           <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-700 flex items-center gap-2">
-              <Users className="h-8 w-8 text-gray-600" /> General Practitioner Dashboard
+            <h1 className="text-3xl md:text-2xl font-extrabold text-gray-700 flex items-center gap-2">
+              <Users className="h-5 w-5 text-gray-600" /> General Practitioner Dashboard
             </h1>
             <p className="text-gray-600 text-lg mt-1">Assign patients to clinics and view appointment results.</p>
           </div>
@@ -409,7 +409,7 @@ const GeneralPractitioner = () => {
               <FileText className="h-4 w-4" />
               Patient Details Form
             </button>
-            <button
+            {/* <button
               onClick={() => setActiveTab('audio')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition ${
                 activeTab === 'audio'
@@ -419,7 +419,7 @@ const GeneralPractitioner = () => {
             >
               <Mic className="h-4 w-4" />
               Audio Recording
-            </button>
+            </button> */}
           </div>
 
           {/* Tab Content */}
@@ -512,53 +512,7 @@ const GeneralPractitioner = () => {
             </form>
           )}
 
-          {activeTab === 'audio' && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-              <form onSubmit={handleAudioReferralSubmit} className="space-y-6">
-                {/* Audio Recording Section Only */}
-                <div className="pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Audio Recording, Transcription & Summary</h3>
-                  <div className="flex flex-col items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={audioRecording.isRecording ? stopAudioRecording : startAudioRecording}
-                      className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white ${audioRecording.isRecording ? 'bg-gray-600 hover:bg-gray-700' : 'bg-red-600 hover:bg-red-700'}`}
-                    >
-                      {audioRecording.isRecording ? <>
-                        <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></span> Stop Recording
-                      </> : <>
-                        <Mic className="h-5 w-5" /> Start Recording
-                      </>}
-                    </button>
-                    <textarea
-                      className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent min-h-[100px]"
-                      placeholder="Transcription will appear here..."
-                      value={audioRecording.transcription}
-                      readOnly
-                    />
-                    <textarea
-                      className="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent min-h-[60px]"
-                      placeholder="Summary will appear here..."
-                      value={audioRecording.summary}
-                      readOnly
-                    />
-                    {audioRecording.audioBlob && !audioRecording.isRecording && (
-                      <audio controls src={audioRecording.audioUrl} className="w-full" />
-                    )}
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold text-lg shadow"
-                  disabled={audioFormLoading || !audioRecording.audioBlob}
-                >
-                  {audioFormLoading ? 'Submitting...' : 'Submit Referral with Audio'}
-                </button>
-                {audioFormError && <div className="text-red-600 text-center">{audioFormError}</div>}
-                {audioFormSuccess && <div className="text-green-600 text-center">{audioFormSuccess}</div>}
-              </form>
-            </div>
-          )}
+          {activeTab === 'audio' && null}
         </section>
       </div>
     </main>

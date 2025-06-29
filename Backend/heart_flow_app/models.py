@@ -22,6 +22,7 @@ class ProfileUser(AbstractUser):
     phone = models.CharField(max_length=20, blank=True)
     is_verified = models.BooleanField(default=False)
     user_images = models.ImageField(upload_to='user_photos/',null=True , blank=True)
+    joining_date = models.DateField(auto_now_add=True,null=True,blank=True)
     USERNAME_FIELD = 'email'  # Important
     REQUIRED_FIELDS = []  # Since email is the only required field
 

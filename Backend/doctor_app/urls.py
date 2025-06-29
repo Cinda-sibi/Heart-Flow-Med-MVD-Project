@@ -29,5 +29,7 @@ urlpatterns = [
     path('add-notes-by-doc/<int:referral_id>/',AddDoctorNotesAPIView.as_view(),name='add-notes-by-doc'),
     path('referrals-by-status/<str:status>/', ReferralListByStatusAPIView.as_view(), name='referrals-by-status'),
 
+    path('patients-test-results/<int:patient_id>/', PatientTestResultListAPIView.as_view(), name='patients-test-results'),
+
 
 ]

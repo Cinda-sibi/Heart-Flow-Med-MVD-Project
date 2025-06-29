@@ -18,4 +18,9 @@ export const bookAppointment = (appointmentData) => {
 // Get all users
 export const getAllUsers = () => {
   return axiosInstance.get('/all-users/');
+};
+
+// Register a new user by admin
+export const addUser = (payload) => {
+  return axiosInstance.post('/user-register-by-admin/', payload);
 }; 

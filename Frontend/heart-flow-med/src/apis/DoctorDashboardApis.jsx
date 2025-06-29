@@ -108,3 +108,9 @@ export const fetchPatientById = async (patientId) => {
   const response = await axiosInstance.get(`/doc-patient-by-id/${patientId}/`);
   return response.data;
 };
+
+// Fetch test results for a patient by ID
+export const fetchPatientTestResults = async (patientId) => {
+  const response = await axiosInstance.get(`/patients-test-results/${patientId}/`);
+  return response.data;
+};

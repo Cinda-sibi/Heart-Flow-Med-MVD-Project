@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, Eye, Calendar } from 'lucide-react';
-import { fetchPatientsByLoginDoctor, fetchPatientById } from '../../../apis/DoctorDashboardApis';
+import { fetchPatientsByLoginDoctor, fetchPatientById, fetchPatientTestResults } from '../../../apis/DoctorDashboardApis';
 
 const MedicalRecords = () => {
   const [records, setRecords] = useState([]);
@@ -8,7 +8,9 @@ const MedicalRecords = () => {
   const [error, setError] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [testResults, setTestResults] = useState([]);
+  const [testResultsLoading, setTestResultsLoading] = useState(false);
   const [patientDetailsLoading, setPatientDetailsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -26,14 +28,20 @@ const MedicalRecords = () => {
 
   const openPatientModal = async (patient) => {
     setPatientDetailsLoading(true);
+    setTestResultsLoading(true);
     try {
       const data = await fetchPatientById(patient.id);
       setSelectedPatient(data.data || data);
+      // Fetch test results for the patient
+      const resultsData = await fetchPatientTestResults(patient.id);
+      setTestResults(resultsData.data || resultsData);
     } catch (err) {
       setSelectedPatient(null);
-      alert('Failed to fetch patient details');
+      setTestResults([]);
+      alert('Failed to fetch patient details or test results');
     } finally {
       setPatientDetailsLoading(false);
+      setTestResultsLoading(false);
     }
   };
 
@@ -50,10 +58,12 @@ const MedicalRecords = () => {
             type="text"
             placeholder="Search records..."
             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
           />
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+          {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
             New Record
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -77,7 +87,14 @@ const MedicalRecords = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {records && records.length > 0 ? (
-                  records.map((record) => (
+                  records
+                    .filter(record => {
+                      const name = record.user
+                        ? `${record.user.first_name} ${record.user.last_name}`.toLowerCase()
+                        : '';
+                      return name.includes(searchQuery.toLowerCase());
+                    })
+                    .map((record) => (
                     <tr key={record.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
@@ -151,31 +168,46 @@ const MedicalRecords = () => {
               <div className="md:w-1/2 p-10 flex flex-col bg-white min-h-[400px] justify-center">
                 <h3 className="text-2xl font-bold text-gray-800 mb-4">Test Results & Reports</h3>
                 <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {testResults.length === 0 ? (
+                  {testResultsLoading ? (
+                    <div className="text-gray-400 italic">Loading test results...</div>
+                  ) : testResults.length === 0 ? (
                     <div className="text-gray-400 italic">No test results found.</div>
                   ) : (
                     testResults.map((result, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-gray-50 rounded p-3">
-                        <div>
-                          <div className="font-medium text-gray-900">{result.type}</div>
-                          <div className="text-xs text-gray-500">{result.date}</div>
+                      <div key={result.id} className="bg-gray-50 rounded p-4 mb-2 shadow flex flex-col gap-1">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="font-semibold text-gray-900">{result.test_name}</div>
+                            <div className="text-xs text-gray-500">{result.date} {result.time}</div>
+                          </div>
+                          <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">{result.status}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={result.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline text-sm"
-                          >
-                            View
-                          </a>
-                          <a
-                            href={result.fileUrl}
-                            download
-                            className="text-green-600 hover:underline text-sm"
-                          >
-                            Download
-                          </a>
+                        <div className="text-sm text-gray-700 mt-1"><span className="font-semibold">Notes:</span> {result.notes || '-'}</div>
+                        {result.result_summary ? (
+                          <div className="text-sm text-gray-700"><span className="font-semibold">Summary:</span> {result.result_summary}</div>
+                        ) : null}
+                        <div className="flex gap-3 mt-2">
+                          {result.attached_report_url ? (
+                            <>
+                              <a
+                                href={result.attached_report_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline text-sm"
+                              >
+                                View Report
+                              </a>
+                              <a
+                                href={result.attached_report_url}
+                                download
+                                className="text-green-600 hover:underline text-sm"
+                              >
+                                Download
+                              </a>
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">No report attached</span>
+                          )}
                         </div>
                       </div>
                     ))

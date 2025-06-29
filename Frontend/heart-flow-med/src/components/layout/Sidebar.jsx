@@ -36,9 +36,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
           ...commonItems,
           { name: 'Users', href: '/users', icon: Users },
           { name: 'Appointments', href: '/book-appointments', icon: Calendar },
-          { name: 'Medical Records', href: '/records', icon: FileText },
-          { name: 'Doctors', href: '/doctors', icon: Stethoscope },
-          { name: 'Nurses', href: '/nurses', icon: UserPlus },
+          { name: 'Patient Medical Records', href: '/patient-records', icon: FileText },
+          // { name: 'Doctors', href: '/doctors', icon: Stethoscope },
+          // { name: 'Nurses', href: '/nurses', icon: UserPlus },
           profileItem,
         ];
       case 'Cardiologist':
@@ -47,16 +47,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
           { name: 'My Patients', href: '/my-patients', icon: Users },
           { name: 'Create Availability', href: '/create-doctors-availability', icon: ActivityIcon },
           { name: 'My Appointments', href: '/doctor-appointments', icon: Calendar },
-          { name: 'Assign Sonographers', href: '/assign-sonographers', icon: ClipboardList },
+          // { name: 'Assign Sonographers', href: '/assign-sonographers', icon: ClipboardList },
           profileItem,
         ];
       case 'Nurse':
         return [
           ...commonItems,
-          { name: 'Patients', href: '/patients', icon: Users },
-          { name: 'Appointments', href: '/appointments', icon: Calendar },
-          { name: 'Vitals', href: '/vitals', icon: Activity },
-          { name: 'Medical Records', href: '/records', icon: FileText },
+          { name: 'Patients', href: '/patients-data', icon: Users },
+          // { name: 'Appointments', href: '/appointments', icon: Calendar },
+          // { name: 'Vitals', href: '/vitals', icon: Activity },
+          // { name: 'Medical Records', href: '/records', icon: FileText },
           profileItem,
         ];
       case 'Patient':

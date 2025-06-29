@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, User, MapPin, Edit3, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, Edit3, Trash2, ChevronLeft, ChevronRight, Stethoscope, FileText } from 'lucide-react';
 import Modal from "../../../components/layout/Modal";
 import { getAllDoctors, getAllPatients, bookAppointment, getAllDoctorAvailabilities, getAllAppointments, searchDoctorAvailability, editAppointment, cancelAppointment, getDoctorAvailabilityById } from '../../../apis/AdministrativeStaffDashboardApis';
 import enUS from 'date-fns/locale/en-US';
@@ -85,9 +85,11 @@ function BookingModal({ isOpen, onClose, children }) {
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
+  const [activeTab, setActiveTab] = useState('appointments'); // 'appointments' or 'tests'
 
   // Modal and form state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [patients, setPatients] = useState([]);
   const [form, setForm] = useState({
@@ -96,6 +98,14 @@ const Appointments = () => {
     date: '',
     time: '',
     notes: ''
+  });
+  const [testForm, setTestForm] = useState({
+    patient: '',
+    testType: '',
+    date: '',
+    time: '',
+    notes: '',
+    priority: 'normal'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -117,6 +127,21 @@ const Appointments = () => {
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [doctorAvailabilities, setDoctorAvailabilities] = useState([]);
   const [doctorAvailLoading, setDoctorAvailLoading] = useState(false);
+
+  // Test booking related states
+  const [tests, setTests] = useState([]);
+  const [testTypes] = useState([
+    'Blood Test',
+    'ECG',
+    'Echocardiogram',
+    'Stress Test',
+    'Holter Monitor',
+    'Cardiac CT Scan',
+    'Cardiac MRI',
+    'Chest X-Ray',
+    'Ultrasound',
+    'Other'
+  ]);
 
   // Fetch all doctors, availabilities, and appointments on mount
   useEffect(() => {
@@ -420,237 +445,433 @@ const Appointments = () => {
     }
   };
 
+  // Test booking functions
+  const openTestModal = async () => {
+    setIsTestModalOpen(true);
+    setError('');
+    setSuccess('');
+    setLoading(true);
+    try {
+      const patientsData = await getAllPatients();
+      setPatients(Array.isArray(patientsData.data) ? patientsData.data : []);
+    } catch (err) {
+      setError('Failed to load patients.');
+      setPatients([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closeTestModal = () => {
+    setIsTestModalOpen(false);
+    setTestForm({ patient: '', testType: '', date: '', time: '', notes: '', priority: 'normal' });
+    setError('');
+    setSuccess('');
+  };
+
+  const handleTestFormChange = (e) => {
+    setTestForm({ ...testForm, [e.target.name]: e.target.value });
+  };
+
+  const handleTestSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      // This would be replaced with actual test booking API call
+      const payload = {
+        patient: testForm.patient,
+        testType: testForm.testType,
+        date: testForm.date,
+        time: testForm.time,
+        notes: testForm.notes,
+        priority: testForm.priority
+      };
+      
+      // Simulate API call - replace with actual API
+      console.log('Booking test:', payload);
+      
+      setSuccess('Test booked successfully!');
+      setTimeout(() => {
+        closeTestModal();
+      }, 1000);
+    } catch (err) {
+      const backendMsg = err?.response?.data?.message;
+      setError(backendMsg || 'Failed to book test.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Appointments</h1>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" onClick={openModal}>
-          New Appointment
+      {/* Tab Navigation */}
+      <div className="flex border-b border-gray-200 mb-6">
+        <button
+          className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'appointments'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+          onClick={() => setActiveTab('appointments')}
+        >
+          <div className="flex items-center gap-2">
+            <Stethoscope className="h-4 w-4" />
+            Doctor Appointments
+          </div>
+        </button>
+        <button
+          className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'tests'
+              ? 'border-blue-500 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+          onClick={() => setActiveTab('tests')}
+        >
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Test Bookings
+          </div>
         </button>
       </div>
 
-      {/* Toggle Buttons for Table/Calendar View */}
-      <div className="flex gap-2 mb-4">
-        <button
-          className={`px-4 py-2 rounded ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-          onClick={() => setViewMode('table')}
-        >
-          Table View
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${viewMode === 'calendar' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-          onClick={() => setViewMode('calendar')}
-        >
-          Calendar View
-        </button>
-      </div>
+      {/* Appointments Tab Content */}
+      {activeTab === 'appointments' && (
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Doctor Appointments</h1>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" onClick={openModal}>
+              New Appointment
+            </button>
+          </div>
 
-      {/* Conditionally render Table or Calendar */}
-      {viewMode === 'table' && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Patient
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Doctor
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date & Time
-                  </th>
-                 
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-              
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {appointments.map((appointment) => (
-                  <tr key={appointment.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <User className="h-10 w-10 text-gray-400" />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {appointment.patient_name || appointment.patientName || '-'}
+          {/* Toggle Buttons for Table/Calendar View */}
+          <div className="flex gap-2 mb-4">
+            <button
+              className={`px-4 py-2 rounded ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+              onClick={() => setViewMode('table')}
+            >
+              Table View
+            </button>
+            <button
+              className={`px-4 py-2 rounded ${viewMode === 'calendar' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+              onClick={() => setViewMode('calendar')}
+            >
+              Calendar View
+            </button>
+          </div>
+
+          {/* Conditionally render Table or Calendar */}
+          {viewMode === 'table' && (
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Patient
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Doctor
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date & Time
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {appointments.map((appointment) => (
+                      <tr key={appointment.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <User className="h-10 w-10 text-gray-400" />
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {appointment.patient_name || appointment.patientName || '-'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{appointment.doctor_name || appointment.doctorName || '-'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            {appointment.date}
+                            <Clock className="h-4 w-4 ml-4 mr-2" />
+                            {appointment.time}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            {appointment.status || '-'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button className="text-blue-600 hover:text-blue-900 mr-3 inline-flex items-center gap-1" onClick={() => handleEdit(appointment)}>
+                            <Edit3 className="h-4 w-4" />
+                            <span>Edit</span>
+                          </button>
+                          <button className="text-red-600 hover:text-red-900 inline-flex items-center gap-1" onClick={() => handleCancel(appointment)}>
+                            <Trash2 className="h-4 w-4" />
+                            <span>Cancel</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Calendar UI for Appointments */}
+          {viewMode === 'calendar' && (
+            <div className="bg-white rounded-lg shadow overflow-hidden my-8 p-4">
+              <h2 className="text-lg font-bold mb-4">Calendar View</h2>
+              <div className="mb-4 flex items-center gap-2">
+                <label className="font-medium">Filter by Doctor:</label>
+                <select
+                  className="border rounded px-3 py-2"
+                  value={selectedDoctor}
+                  onChange={e => setSelectedDoctor(e.target.value)}
+                >
+                  <option value="">All Doctors</option>
+                  {doctors.map((d) => (
+                    <option key={d.user_id || d.id} value={d.user_id || d.id}>
+                      {(d.first_name && d.last_name)
+                        ? `Dr. ${d.first_name} ${d.last_name}`
+                        : d.name || d.full_name || d.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ height: 600 }}>
+                <BigCalendar
+                  localizer={localizer}
+                  events={displayedEvents}
+                  startAccessor="start"
+                  endAccessor="end"
+                  style={{ height: 600 }}
+                  selectable
+                  onSelectSlot={handleSelectSlot}
+                  onSelectEvent={handleEventClick}
+                  popup
+                  views={['month']}
+                  defaultView="month"
+                  components={{ toolbar: CustomToolbar }}
+                  eventPropGetter={(event) => {
+                    if (event.resource?.type === 'appointment') {
+                      let bg = '';
+                      let color = '#222';
+                      if (event.resource.status === 'Scheduled') {
+                        bg = '#bae6fd'; // light blue
+                        color = '#0369a1'; // blue text
+                      } else if (event.resource.status === 'Cancelled') {
+                        bg = '#fecaca'; // light red
+                        color = '#b91c1c'; // red text
+                      } else if (event.resource.status === 'Completed') {
+                        bg = '#bbf7d0'; // light green
+                        color = '#166534'; // green text
+                      }
+                      return {
+                        style: {
+                          backgroundColor: bg,
+                          color,
+                          borderRadius: '6px',
+                          border: 'none',
+                          fontWeight: 600,
+                        }
+                      };
+                    }
+                    // Default for availability
+                    return {
+                      style: {
+                        backgroundColor: '#2563eb',
+                        color: 'white',
+                        borderRadius: '6px',
+                        border: 'none',
+                      }
+                    };
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-lg shadow overflow-hidden my-8">
+            <h2 className="text-lg font-bold px-6 py-4 bg-gray-50">Doctors' Availabilities</h2>
+            {/* Search input for doctor availability */}
+            <div className="px-6 py-2 flex items-center gap-2">
+              <input
+                type="text"
+                className="border rounded px-3 py-2 w-full md:w-1/3"
+                placeholder="Search doctor by name..."
+                value={availabilitySearch}
+                onChange={e => setAvailabilitySearch(e.target.value)}
+                disabled={loading}
+              />
+              {availabilityLoading && <span className="text-xs text-gray-500 ml-2">Searching...</span>}
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Time</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Time</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {availabilities.map((a, idx) => {
+                    // Find the doctor object for this availability
+                    const doc = doctors.find(d => (d.user_id || d.id) === (a.doctor_id || a.doctor));
+                    const doctorName = doc
+                      ? (doc.first_name && doc.last_name
+                          ? `Dr. ${doc.first_name} ${doc.last_name}`
+                          : doc.name || doc.full_name || doc.username)
+                      : a.doctor_name || "-";
+                    // Format time
+                    const formatTime = (t) => t ? t.slice(0,5) : "-";
+                    return (
+                      <tr key={idx}>
+                        <td className="px-6 py-4 whitespace-nowrap">{doctorName}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{a.day_of_week || "-"}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{formatTime(a.start_time)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{formatTime(a.end_time)}</td>
+                      </tr>
+                    );
+                  })}
+                  {availabilities.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="text-center py-4 text-gray-500">
+                        No availabilities found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Tests Tab Content */}
+      {activeTab === 'tests' && (
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Test Bookings</h1>
+            <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700" onClick={openTestModal}>
+              Book New Test
+            </button>
+          </div>
+
+          {/* Tests Table */}
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Patient
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Test Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date & Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Priority
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {tests.map((test) => (
+                    <tr key={test.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            <User className="h-10 w-10 text-gray-400" />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {test.patient_name || '-'}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{appointment.doctor_name || appointment.doctorName || '-'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {appointment.date}
-                        <Clock className="h-4 w-4 ml-4 mr-2" />
-                        {appointment.time}
-                      </div>
-                    </td>
-                
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {appointment.status || '-'}
-                      </span>
-                    </td>
-                  
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button className="text-blue-600 hover:text-blue-900 mr-3 inline-flex items-center gap-1" onClick={() => handleEdit(appointment)}>
-                        <Edit3 className="h-4 w-4" />
-                        <span>Edit</span>
-                      </button>
-                      <button className="text-red-600 hover:text-red-900 inline-flex items-center gap-1" onClick={() => handleCancel(appointment)}>
-                        <Trash2 className="h-4 w-4" />
-                        <span>Cancel</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{test.testType || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center text-sm text-gray-900">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          {test.date}
+                          <Clock className="h-4 w-4 ml-4 mr-2" />
+                          {test.time}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          test.priority === 'urgent' 
+                            ? 'bg-red-100 text-red-800' 
+                            : test.priority === 'high'
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {test.priority || 'normal'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          {test.status || 'Scheduled'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button className="text-blue-600 hover:text-blue-900 mr-3 inline-flex items-center gap-1">
+                          <Edit3 className="h-4 w-4" />
+                          <span>Edit</span>
+                        </button>
+                        <button className="text-red-600 hover:text-red-900 inline-flex items-center gap-1">
+                          <Trash2 className="h-4 w-4" />
+                          <span>Cancel</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {tests.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="text-center py-8 text-gray-500">
+                        <FileText className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                        <p>No test bookings found.</p>
+                        <p className="text-sm">Click "Book New Test" to schedule a test.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </>
       )}
-
-      {/* Calendar UI for Appointments */}
-      {viewMode === 'calendar' && (
-        <div className="bg-white rounded-lg shadow overflow-hidden my-8 p-4">
-          <h2 className="text-lg font-bold mb-4">Calendar View</h2>
-          <div className="mb-4 flex items-center gap-2">
-            <label className="font-medium">Filter by Doctor:</label>
-            <select
-              className="border rounded px-3 py-2"
-              value={selectedDoctor}
-              onChange={e => setSelectedDoctor(e.target.value)}
-            >
-              <option value="">All Doctors</option>
-              {doctors.map((d) => (
-                <option key={d.user_id || d.id} value={d.user_id || d.id}>
-                  {(d.first_name && d.last_name)
-                    ? `Dr. ${d.first_name} ${d.last_name}`
-                    : d.name || d.full_name || d.username}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div style={{ height: 600 }}>
-            <BigCalendar
-              localizer={localizer}
-              events={displayedEvents}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: 600 }}
-              selectable
-              onSelectSlot={handleSelectSlot}
-              onSelectEvent={handleEventClick}
-              popup
-              views={['month']}
-              defaultView="month"
-              components={{ toolbar: CustomToolbar }}
-              eventPropGetter={(event) => {
-                if (event.resource?.type === 'appointment') {
-                  let bg = '';
-                  let color = '#222';
-                  if (event.resource.status === 'Scheduled') {
-                    bg = '#bae6fd'; // light blue
-                    color = '#0369a1'; // blue text
-                  } else if (event.resource.status === 'Cancelled') {
-                    bg = '#fecaca'; // light red
-                    color = '#b91c1c'; // red text
-                  } else if (event.resource.status === 'Completed') {
-                    bg = '#bbf7d0'; // light green
-                    color = '#166534'; // green text
-                  }
-                  return {
-                    style: {
-                      backgroundColor: bg,
-                      color,
-                      borderRadius: '6px',
-                      border: 'none',
-                      fontWeight: 600,
-                    }
-                  };
-                }
-                // Default for availability
-                return {
-                  style: {
-                    backgroundColor: '#2563eb',
-                    color: 'white',
-                    borderRadius: '6px',
-                    border: 'none',
-                  }
-                };
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white rounded-lg shadow overflow-hidden my-8">
-        <h2 className="text-lg font-bold px-6 py-4 bg-gray-50">Doctors' Availabilities</h2>
-        {/* Search input for doctor availability */}
-        <div className="px-6 py-2 flex items-center gap-2">
-          <input
-            type="text"
-            className="border rounded px-3 py-2 w-full md:w-1/3"
-            placeholder="Search doctor by name..."
-            value={availabilitySearch}
-            onChange={e => setAvailabilitySearch(e.target.value)}
-            disabled={loading}
-          />
-          {availabilityLoading && <span className="text-xs text-gray-500 ml-2">Searching...</span>}
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Time</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {availabilities.map((a, idx) => {
-                // Find the doctor object for this availability
-                const doc = doctors.find(d => (d.user_id || d.id) === (a.doctor_id || a.doctor));
-                const doctorName = doc
-                  ? (doc.first_name && doc.last_name
-                      ? `Dr. ${doc.first_name} ${doc.last_name}`
-                      : doc.name || doc.full_name || doc.username)
-                  : a.doctor_name || "-";
-                // Format time
-                const formatTime = (t) => t ? t.slice(0,5) : "-";
-                return (
-                  <tr key={idx}>
-                    <td className="px-6 py-4 whitespace-nowrap">{doctorName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{a.day_of_week || "-"}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{formatTime(a.start_time)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{formatTime(a.end_time)}</td>
-                  </tr>
-                );
-              })}
-              {availabilities.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="text-center py-4 text-gray-500">
-                    No availabilities found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       {/* Booking Appointment Modal */}
       <BookingModal isOpen={isModalOpen} onClose={closeModal}>
@@ -783,6 +1004,120 @@ const Appointments = () => {
               disabled={loading}
             >
               {loading ? 'Booking...' : 'Book Appointment'}
+            </button>
+          </div>
+        </form>
+      </BookingModal>
+
+      {/* Test Booking Modal */}
+      <BookingModal isOpen={isTestModalOpen} onClose={closeTestModal}>
+        <h2 className="text-xl font-bold mb-4">Book Test</h2>
+        <form onSubmit={handleTestSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Patient</label>
+            <select
+              name="patient"
+              value={testForm.patient}
+              onChange={handleTestFormChange}
+              className="w-full border rounded px-3 py-2"
+              required
+              disabled={loading}
+            >
+              <option value="">Select Patient</option>
+              {Array.isArray(patients) && patients.map((p) => (
+                <option key={p.user_id || p.id} value={p.user_id || p.id}>
+                  {(p.first_name && p.last_name) 
+                    ? `${p.first_name} ${p.last_name}` 
+                    : p.name || p.full_name || p.username}
+                  {p.unique_id ? ` (${p.unique_id})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Test Type</label>
+            <select
+              name="testType"
+              value={testForm.testType}
+              onChange={handleTestFormChange}
+              className="w-full border rounded px-3 py-2"
+              required
+              disabled={loading}
+            >
+              <option value="">Select Test Type</option>
+              {testTypes.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Priority</label>
+            <select
+              name="priority"
+              value={testForm.priority}
+              onChange={handleTestFormChange}
+              className="w-full border rounded px-3 py-2"
+              required
+              disabled={loading}
+            >
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Date</label>
+            <input
+              type="date"
+              name="date"
+              value={testForm.date}
+              onChange={handleTestFormChange}
+              className="w-full border rounded px-3 py-2"
+              required
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Time</label>
+            <input
+              type="time"
+              name="time"
+              value={testForm.time}
+              onChange={handleTestFormChange}
+              className="w-full border rounded px-3 py-2"
+              required
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Notes</label>
+            <textarea
+              name="notes"
+              value={testForm.notes}
+              onChange={handleTestFormChange}
+              className="w-full border rounded px-3 py-2"
+              rows={2}
+              disabled={loading}
+              placeholder="Any special instructions or requirements..."
+            />
+          </div>
+          {error && <div className="text-red-600 text-sm">{error}</div>}
+          {success && <div className="text-green-600 text-sm">{success}</div>}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              className="mr-2 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+              onClick={closeTestModal}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+              disabled={loading}
+            >
+              {loading ? 'Booking...' : 'Book Test'}
             </button>
           </div>
         </form>

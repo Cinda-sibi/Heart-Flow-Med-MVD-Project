@@ -17,6 +17,10 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from administrative_staff_app.serializers import *
 from gp_app.serializers import *
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from . models import PatientProfile
+from admin_app.models import *
+from nurse_app.serializers import *
 
 # Create your views here.
 
@@ -527,3 +531,15 @@ class ReferralListByStatusAPIView(APIView):
         return custom_200(f"Referrals with status '{status}' listed successfully", serializer.data)
 
 
+# get patints test results 
+class PatientTestResultListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        
+
+        patient = get_object_or_404(PatientProfile, id=patient_id)
+
+        appointments = DiagnosticAppointment.objects.filter(patient=patient).select_related('result', 'test', 'assigned_staff')
+        serializer = AssignedPatientSerializer(appointments, many=True, context={'request': request})
+        return custom_200("Test results listed successfully",serializer.data)

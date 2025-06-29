@@ -314,7 +314,7 @@ const CardiologistDashboard = () => {
           </div>
         </div>
         {/* Available Staff */}
-        <div className="bg-white rounded-lg shadow flex items-center p-6">
+        {/* <div className="bg-white rounded-lg shadow flex items-center p-6">
           <div className="p-3 rounded-lg bg-purple-100">
             <Users className="h-7 w-7 text-purple-600" />
           </div>
@@ -322,7 +322,7 @@ const CardiologistDashboard = () => {
             <p className="text-sm font-medium text-gray-600">Available Staff</p>
             <p className="text-2xl font-bold text-gray-900">{stats.availableStaff ?? '--'}</p>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -597,7 +597,7 @@ const CardiologistDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow p-6">
+      {/* <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button className="flex items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
@@ -613,7 +613,7 @@ const CardiologistDashboard = () => {
             <span className="font-medium text-purple-900">View Analytics</span>
           </button>
         </div>
-      </div>
+      </div> */}
 
       {/* Referral Details Modal */}
       {selectedReferral && (

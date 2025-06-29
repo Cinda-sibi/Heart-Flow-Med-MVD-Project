@@ -36,3 +36,16 @@ class DiagnosticAppointment(models.Model):
 
     def __str__(self):
         return f"{self.test.name} for {self.patient.user.get_full_name()} on {self.date} {self.time}"
+
+
+# models.py
+class DiagnosticTestResult(models.Model):
+    appointment = models.OneToOneField(DiagnosticAppointment, on_delete=models.CASCADE, related_name='result')
+    recorded_by = models.ForeignKey(ProfileUser, on_delete=models.SET_NULL, null=True, blank=True,
+                                    limit_choices_to={'role__in': ['Nurse', 'Sonographer', 'IT Staff']})
+    result_summary = models.TextField()
+    attached_report = models.FileField(upload_to='diagnostic_reports/', null=True, blank=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Result for {self.appointment}"

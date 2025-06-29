@@ -27,7 +27,8 @@ import {
 import { 
   getPatientReferrals, 
   updateReferralStatus,
-  bookAppointment
+  bookAppointment,
+  getAllUsers
 } from '../../apis/AdminDashboardApis';
 import { useNavigate } from 'react-router-dom';
 
@@ -91,14 +92,10 @@ const ClinicalDashboard = () => {
     }
   ];
 
-  const staff = [
-    { id: 1, name: 'Dr. James Smith', role: 'GP', status: 'Available', nextFree: '10:30 AM', specialization: 'General Practice' },
-    { id: 2, name: 'Dr. Lisa Johnson', role: 'Cardiologist', status: 'Busy', nextFree: '2:00 PM', specialization: 'Cardiology' },
-    { id: 3, name: 'Sarah Wilson', role: 'Sonographer', status: 'Available', nextFree: 'Now', specialization: 'Ultrasound' },
-    { id: 4, name: 'Mark Davis', role: 'Blood Tester', status: 'Available', nextFree: '11:00 AM', specialization: 'Pathology' },
-    { id: 5, name: 'Dr. Jennifer Brown', role: 'Obstetrician', status: 'Available', nextFree: '1:30 PM', specialization: 'Obstetrics' },
-    { id: 6, name: 'Tom Anderson', role: 'Radiologist', status: 'On Break', nextFree: '3:00 PM', specialization: 'Radiology' }
-  ];
+  // State for users/staff data
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState(null);
 
   const appointments = [
     { id: 1, time: '9:00 AM', patient: 'Sarah Thompson', type: 'Blood Test', provider: 'Mark Davis', status: 'Confirmed' },
@@ -119,6 +116,26 @@ const ClinicalDashboard = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState(null);
   const [bookingSuccess, setBookingSuccess] = useState(null);
+
+  // Fetch users data
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setUsersLoading(true);
+        setUsersError(null);
+        const response = await getAllUsers();
+        setUsers(response.data.data || []);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setUsersError('Failed to load users data. Please try again.');
+        setUsers([]);
+      } finally {
+        setUsersLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   // Fetch referrals data
   useEffect(() => {
@@ -189,6 +206,37 @@ const ClinicalDashboard = () => {
     }
   };
 
+  // Helper function to get role display name
+  const getRoleDisplayName = (role) => {
+    const roleMap = {
+      'admin': 'Administrator',
+      'gp': 'General Practitioner',
+      'doctor': 'Doctor',
+      'nurse': 'Nurse',
+      'sonographer': 'Sonographer',
+      'administrative_staff': 'Administrative Staff',
+      'patient': 'Patient'
+    };
+    return roleMap[role] || role;
+  };
+
+  // Helper function to get status color
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'available':
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'busy':
+      case 'inactive':
+        return 'bg-red-100 text-red-800';
+      case 'on break':
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
@@ -230,22 +278,39 @@ const ClinicalDashboard = () => {
     </div>
   );
 
-  const StaffCard = ({ staff }) => (
+  const StaffCard = ({ user }) => (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-900 text-lg">{staff.name}</h3>
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-          staff.status === 'Available' ? 'bg-green-100 text-green-800' :
-          staff.status === 'Busy' ? 'bg-red-100 text-red-800' :
-          'bg-yellow-100 text-yellow-800'
-        }`}>
-          {staff.status}
+        <h3 className="font-semibold text-gray-900 text-lg">
+          {user.first_name} {user.last_name}
+        </h3>
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+          {user.status || 'Active'}
         </span>
       </div>
       <div className="space-y-2 text-sm text-gray-600">
-        <p><span className="font-medium">Role:</span> {staff.role}</p>
-        <p><span className="font-medium">Specialization:</span> {staff.specialization}</p>
-        <p><span className="font-medium">Next Available:</span> {staff.nextFree}</p>
+        <p><span className="font-medium">Role:</span> {getRoleDisplayName(user.role)}</p>
+        <p><span className="font-medium">Email:</span> {user.email}</p>
+        {user.phone && (
+          <p><span className="font-medium">Phone:</span> {user.phone}</p>
+        )}
+        {user.department && (
+          <p><span className="font-medium">Department:</span> {user.department}</p>
+        )}
+        {user.specialization && (
+          <p><span className="font-medium">Specialization:</span> {user.specialization}</p>
+        )}
+        <p><span className="font-medium">Joined:</span> {new Date(user.date_joined).toLocaleDateString()}</p>
+      </div>
+      <div className="flex gap-2 mt-4">
+        <button className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded text-sm hover:bg-blue-100 transition-colors">
+          <Edit className="h-4 w-4 inline mr-1" />
+          Edit
+        </button>
+        <button className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded text-sm hover:bg-red-100 transition-colors">
+          <Trash2 className="h-4 w-4 inline mr-1" />
+          Remove
+        </button>
       </div>
     </div>
   );
@@ -450,14 +515,14 @@ const ClinicalDashboard = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">Patient Management</h2>
               <div className="flex gap-2">
-                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                {/* <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
                   <Filter className="h-4 w-4 mr-2" />
                   Filter
                 </button>
                 <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
                   <Download className="h-4 w-4 mr-2" />
                   Export
-                </button>
+                </button> */}
               </div>
             </div>
             
@@ -473,17 +538,43 @@ const ClinicalDashboard = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">Staff Management</h2>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                 <Plus className="h-4 w-4 inline mr-2" />
                 Add Staff
-              </button>
+              </button> */}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {staff.map(member => (
-                <StaffCard key={member.id} staff={member} />
-              ))}
-            </div>
+            {usersLoading ? (
+              <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading staff members...</p>
+              </div>
+            ) : usersError ? (
+              <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <p className="text-red-600 mb-4">{usersError}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : users.length === 0 ? (
+              <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Staff Members Found</h3>
+                <p className="text-gray-600">There are currently no staff members to display.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {users
+                  .filter(user => user.role !== 'patient') // Filter out patients, show only staff
+                  .map(user => (
+                    <StaffCard key={user.id} user={user} />
+                  ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -491,10 +582,10 @@ const ClinicalDashboard = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">Appointment Management</h2>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                 <Plus className="h-4 w-4 inline mr-2" />
                 New Appointment
-              </button>
+              </button> */}
             </div>
             
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -548,10 +639,10 @@ const ClinicalDashboard = () => {
             {console.log('Current referrals state:', referrals)}
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">Referral Management</h2>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                 <Plus className="h-4 w-4 inline mr-2" />
                 New Referral
-              </button>
+              </button> */}
             </div>
             
             {referralsLoading ? (

@@ -1,4 +1,4 @@
-import { Bell, Search, User, LogOut, Settings, Menu } from 'lucide-react';
+import { Bell, Search, User, LogOut, Settings, Menu, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import useUserProfile from '../../hooks/useUserProfile';
 import { Link, useNavigate } from 'react-router-dom';
@@ -24,6 +24,8 @@ const Header = ({ setSidebarOpen }) => {
   const [changePasswordLoading, setChangePasswordLoading] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState(null);
   const [changePasswordSuccess, setChangePasswordSuccess] = useState(null);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const getRoleSpecificInfo = () => {
@@ -150,60 +152,106 @@ const Header = ({ setSidebarOpen }) => {
       {/* Modal for user profile */}
       <Modal isOpen={isModalOpen} onClose={closeModal}>
         <div className="flex flex-col items-center space-y-2">
-          <div className="h-16 w-16 rounded-full bg-blue-500 flex items-center justify-center mb-2">
+          <div className="h-16 w-16 rounded-full bg-blue-500 flex items-center justify-center mb-2 shadow-lg">
             <User className="h-8 w-8 text-white" />
           </div>
-          <div className="text-lg font-semibold text-gray-900">
+          <div className="text-xl font-bold text-gray-900 mt-2">
             {profile?.first_name || user?.first_name} {profile?.last_name || user?.last_name}
           </div>
-          <div className="text-sm text-gray-500 mb-2">{profile?.email || user?.email}</div>
+          <div className="text-base text-gray-500 mb-1">{profile?.email || user?.email}</div>
           {loading ? (
             <div className="text-xs text-gray-500">Loading...</div>
           ) : error ? (
             <div className="text-xs text-red-500">{error}</div>
           ) : (
             <>
-              <div className="text-sm text-gray-700">Role: {profile?.role}</div>
+              <div className="text-sm text-gray-700 mb-2">Role: {profile?.role}</div>
               {getRoleSpecificInfo()}
             </>
           )}
-          <form onSubmit={handleChangePasswordSubmit} className="w-80 p-2 flex flex-col gap-4">
-            <div className="text-lg font-semibold text-center">Change Password</div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Current Password</label>
+          <div className="w-full flex items-center my-4">
+            <div className="flex-grow border-t border-gray-200"></div>
+            <span className="mx-4 text-gray-400 font-semibold">Change Password</span>
+            <div className="flex-grow border-t border-gray-200"></div>
+          </div>
+          <form onSubmit={handleChangePasswordSubmit} className="w-full max-w-xs bg-gray-50 rounded-xl shadow p-6 flex flex-col gap-4">
+            <div className="text-lg font-bold text-center text-gray-800 mb-2">Change Password</div>
+            <div className="relative">
+              <label className="block text-sm font-medium mb-1 text-gray-700">Current Password</label>
               <input
                 type="password"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
                 value={changePasswordForm.old_password}
                 onChange={e => setChangePasswordForm(f => ({ ...f, old_password: e.target.value }))}
                 required
+                placeholder="Enter current password"
+                autoComplete="current-password"
               />
+              <span className="absolute right-3 top-9 text-gray-400 pointer-events-none">
+                <User className="h-4 w-4" />
+              </span>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">New Password</label>
+            <div className="relative">
+              <label className="block text-sm font-medium mb-1 text-gray-700">New Password</label>
               <input
-                type="password"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                type={showNewPassword ? "text" : "password"}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
                 value={changePasswordForm.new_password}
                 onChange={e => setChangePasswordForm(f => ({ ...f, new_password: e.target.value }))}
                 required
+                placeholder="Enter new password"
+                autoComplete="new-password"
               />
+              <span
+                className="absolute right-3 top-9 text-gray-400 cursor-pointer"
+                onClick={() => setShowNewPassword(v => !v)}
+                tabIndex={0}
+                role="button"
+                aria-label={showNewPassword ? "Hide password" : "Show password"}
+              >
+                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </span>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Confirm New Password</label>
+            <div className="relative">
+              <label className="block text-sm font-medium mb-1 text-gray-700">Confirm New Password</label>
               <input
-                type="password"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                type={showConfirmPassword ? "text" : "password"}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
                 value={changePasswordForm.confirm_password}
                 onChange={e => setChangePasswordForm(f => ({ ...f, confirm_password: e.target.value }))}
                 required
+                placeholder="Confirm new password"
+                autoComplete="new-password"
               />
+              <span
+                className="absolute right-3 top-9 text-gray-400 cursor-pointer"
+                onClick={() => setShowConfirmPassword(v => !v)}
+                tabIndex={0}
+                role="button"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </span>
             </div>
-            {changePasswordError && <div className="text-red-600 text-sm">{changePasswordError}</div>}
-            {changePasswordSuccess && <div className="text-green-600 text-sm">{changePasswordSuccess}</div>}
+            {changePasswordError && (
+              <div className="flex items-center text-red-600 text-sm mt-1">
+                <span className="mr-2">
+                  <svg className="h-5 w-5 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </span>
+                {changePasswordError}
+              </div>
+            )}
+            {changePasswordSuccess && (
+              <div className="flex items-center text-green-600 text-sm mt-1">
+                <span className="mr-2">
+                  <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                </span>
+                {changePasswordSuccess}
+              </div>
+            )}
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors font-semibold"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white py-2 rounded-lg hover:from-blue-600 hover:to-blue-800 transition-colors font-semibold shadow-md mt-2"
               disabled={changePasswordLoading}
             >
               {changePasswordLoading ? 'Changing...' : 'Change Password'}

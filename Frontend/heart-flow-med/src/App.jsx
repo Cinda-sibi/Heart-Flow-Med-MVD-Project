@@ -45,9 +45,13 @@ import PatientsTestResults from './pages/sidebarpages/patients/PatientsTestResul
 
 
 import SonoPatientReferral from './pages/sidebarpages/sonographers/SonoPatientReferral';
-
+// import sidebars page admin
 import UserManagement  from './pages/sidebarpages/admin/UserManagement';
 import AppointmentBooking from './pages/sidebarpages/admin/AppointmentBooking';
+import PatientRecords from './pages/sidebarpages/admin/PatientRecords';
+
+// import sidebars page nurse
+import PatientsData from './pages/sidebarpages/nurse/PatientsData';
 
 // Protected Route Component with role-based routing
 const ProtectedRoute = ({ children }) => {
@@ -158,6 +162,19 @@ function AppRoutes() {
             <ProtectedRoute>
               <LayoutWrapper>
                 <AppointmentBooking />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          } 
+        />
+      )}
+       {/* Role-specific Protected Routes */}
+       {user?.role === 'Admin' && (
+        <Route 
+          path="/patient-records" 
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <PatientRecords />
               </LayoutWrapper>
             </ProtectedRoute>
           } 
@@ -326,6 +343,19 @@ function AppRoutes() {
             <ProtectedRoute>
               <LayoutWrapper>
                 <SonoPatientReferral />
+              </LayoutWrapper>
+            </ProtectedRoute>
+          }
+        />
+      )}
+
+{user?.role === 'Nurse' && (
+        <Route
+          path="/patients-data"
+          element={
+            <ProtectedRoute>
+              <LayoutWrapper>
+                <PatientsData />
               </LayoutWrapper>
             </ProtectedRoute>
           }

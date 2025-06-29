@@ -9,40 +9,50 @@ import {
   CheckCircle,
   FileText,
   Thermometer,
-  Heart
+  Heart,
+  Download
 } from 'lucide-react';
+import { getAssignedPatients, getDiagnosticTasksSummary,getTodaysAssignedPatients } from '../../apis/NurseDashboardApis';
+import Modal from '../layout/Modal';
 
 const NurseDashboard = () => {
   const [stats, setStats] = useState({
     assignedPatients: 0,
     completedTasks: 0,
-    pendingTasks: 0,
-    vitalSignsChecks: 0
+    pendingTasks: 0
   });
 
   const [patientQueue, setPatientQueue] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [recentVitals, setRecentVitals] = useState([]);
+  // const [recentVitals, setRecentVitals] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const patientsPerPage = 5; // You can adjust this number
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   const fetchDashboardData = async () => {
-    // Mock data - replace with actual API calls
-    setStats({
-      assignedPatients: 15,
-      completedTasks: 8,
-      pendingTasks: 4,
-      vitalSignsChecks: 12
-    });
+    try {
+      // Fetch summary counts for cards
+      const summary = await getDiagnosticTasksSummary();
+      setStats({
+        assignedPatients: summary.assigned_patients || 0,
+        completedTasks: summary.completed_tasks || 0,
+        pendingTasks: summary.pending_tasks || 0
+      });
+    } catch (error) {
+      setStats({ assignedPatients: 0, completedTasks: 0, pendingTasks: 0 });
+    }
 
-    setPatientQueue([
-      { id: 1, name: 'John Smith', room: '201A', priority: 'high', reason: 'Post-op monitoring' },
-      { id: 2, name: 'Mary Johnson', room: '205B', priority: 'medium', reason: 'Medication administration' },
-      { id: 3, name: 'Robert Brown', room: '203C', priority: 'low', reason: 'Routine vitals' },
-      { id: 4, name: 'Lisa Wilson', room: '207A', priority: 'high', reason: 'Pain assessment' }
-    ]);
+    try {
+      const assignedPatients = await getTodaysAssignedPatients();
+      setPatientQueue(assignedPatients);
+    } catch (error) {
+      setPatientQueue([]);
+    }
 
     setTasks([
       { id: 1, task: 'Administer medication - Room 201A', time: '10:00 AM', completed: false, priority: 'high' },
@@ -81,12 +91,19 @@ const NurseDashboard = () => {
     }
   };
 
+  const indexOfLastPatient = currentPage * patientsPerPage;
+  const indexOfFirstPatient = indexOfLastPatient - patientsPerPage;
+  const currentPatients = patientQueue.slice(indexOfFirstPatient, indexOfLastPatient);
+  const totalPages = Math.ceil(patientQueue.length / patientsPerPage);
+
   return (
-    <div className="p-2 sm:p-4 md:p-6 space-y-6">
+    <div className="min-h-screen p-2 sm:p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Nurse Dashboard</h1>
-        <p className="text-gray-600">Manage your patients and daily tasks efficiently.</p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-2 border-b border-gray-200">
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Nurse Dashboard</h1>
+          <p className="text-gray-500 mt-1">Manage your patients and daily tasks efficiently.</p>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -109,136 +126,120 @@ const NurseDashboard = () => {
           icon={Clock}
           color="yellow"
         />
-        <StatCard
-          title="Vitals Recorded"
-          value={stats.vitalSignsChecks}
-          icon={Activity}
-          color="purple"
-        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Patient Queue */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Patient Queue</h2>
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-100/60 to-green-100/40 rounded-t-2xl">
+            <h2 className="text-xl  text-gray-900">Assigned Patients</h2>
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              {patientQueue.map((patient) => (
-                <div key={patient.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                      <Users className="h-5 w-5 text-blue-600" />
+              {patientQueue.length === 0 ? (
+                <div className="text-center text-gray-400 py-8 font-semibold">No data found</div>
+              ) : (
+                currentPatients.map((patient) => (
+                  <div key={patient.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl shadow hover:shadow-lg transition-shadow border border-gray-100">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center justify-center w-12 h-12 bg-blue-200 rounded-full shadow">
+                        <Users className="h-6 w-6 text-blue-700" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 text-lg">{patient.patient_name}</h3>
+                        <p className="text-xs text-gray-500">Test: {patient.test_name}</p>
+                        <p className="text-xs text-gray-400">{patient.date} {patient.time}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{patient.name}</h3>
-                      <p className="text-sm text-gray-600">Room {patient.room}</p>
-                      <p className="text-sm text-gray-500">{patient.reason}</p>
+                    <div className="flex flex-col items-end space-y-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide ${getPriorityColor(patient.status)}`}>{patient.status?.toUpperCase()}</span>
+                      <button
+                        className="px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-semibold shadow focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        onClick={() => { setSelectedPatient(patient); setIsModalOpen(true); }}
+                      >
+                        View Details
+                      </button>
                     </div>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(patient.priority)}`}>
-                    {patient.priority.toUpperCase()}
-                  </span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* Today's Tasks */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Today's Tasks</h2>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {tasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className={`flex items-center justify-center w-6 h-6 rounded-full ${
-                      task.completed ? 'bg-green-100' : 'bg-gray-100'
-                    }`}>
-                      {task.completed ? (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <Clock className="h-4 w-4 text-gray-400" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className={`font-medium ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
-                        {task.task}
-                      </h3>
-                      <p className="text-sm text-gray-600">{task.time}</p>
-                    </div>
-                  </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                    {task.priority.toUpperCase()}
-                  </span>
-                </div>
-              ))}
+            <div className="flex justify-center mt-4 space-x-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="px-2 py-1">{currentPage} / {totalPages}</span>
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Vital Signs */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Vital Signs</h2>
-        </div>
-        <div className="p-6">
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-2 font-medium text-gray-900">Patient</th>
-                  <th className="text-left py-2 font-medium text-gray-900">Room</th>
-                  <th className="text-left py-2 font-medium text-gray-900">BP</th>
-                  <th className="text-left py-2 font-medium text-gray-900">HR</th>
-                  <th className="text-left py-2 font-medium text-gray-900">Temp</th>
-                  <th className="text-left py-2 font-medium text-gray-900">Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentVitals.map((vital, index) => (
-                  <tr key={index} className="border-b border-gray-100">
-                    <td className="py-3 text-gray-900">{vital.patient}</td>
-                    <td className="py-3 text-gray-600">{vital.room}</td>
-                    <td className="py-3 text-gray-900">{vital.bp}</td>
-                    <td className="py-3 text-gray-900">{vital.hr}</td>
-                    <td className="py-3 text-gray-900">{vital.temp}</td>
-                    <td className="py-3 text-gray-600">{vital.time}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* Modernized Modal for Patient Details */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        {selectedPatient && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-extrabold text-blue-700 mb-2 border-b pb-2 border-blue-100">Patient Details</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <span className="font-semibold text-gray-700">Name:</span>
+                <span className="ml-2 text-gray-900">{selectedPatient.patient_name}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">Test:</span>
+                <span className="ml-2 text-gray-900">{selectedPatient.test_name}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">Date:</span>
+                <span className="ml-2 text-gray-900">{selectedPatient.date}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">Time:</span>
+                <span className="ml-2 text-gray-900">{selectedPatient.time}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">Note:</span>
+                <span className="ml-2 text-gray-900">{selectedPatient.notes}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">Status:</span>
+                <span className={`ml-2 font-semibold ${getPriorityColor(selectedPatient.status)}`}>{selectedPatient.status?.toUpperCase()}</span>
+              </div>
+            </div>
+            {selectedPatient.attached_report_url && (
+              <div className="flex space-x-3 mt-4">
+                <a
+                  href={selectedPatient.attached_report_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold shadow focus:outline-none focus:ring-2 focus:ring-green-400"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  View Report
+                </a>
+                <a
+                  href={selectedPatient.attached_report_url}
+                  download
+                  className="flex items-center px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </a>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <button className="flex items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-            <Thermometer className="h-6 w-6 text-blue-600 mr-2" />
-            <span className="font-medium text-blue-900">Record Vitals</span>
-          </button>
-          <button className="flex items-center justify-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-            <Clipboard className="h-6 w-6 text-green-600 mr-2" />
-            <span className="font-medium text-green-900">Update Care Plan</span>
-          </button>
-          <button className="flex items-center justify-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
-            <FileText className="h-6 w-6 text-purple-600 mr-2" />
-            <span className="font-medium text-purple-900">Patient Notes</span>
-          </button>
-          <button className="flex items-center justify-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
-            <AlertTriangle className="h-6 w-6 text-red-600 mr-2" />
-            <span className="font-medium text-red-900">Emergency Alert</span>
-          </button>
-        </div>
-      </div>
+        )}
+      </Modal>
     </div>
   );
 };

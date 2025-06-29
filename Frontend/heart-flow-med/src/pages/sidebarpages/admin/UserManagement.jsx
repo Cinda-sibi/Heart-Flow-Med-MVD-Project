@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAllUsers } from '../../../apis/AdminDashboardApis';
+import { getAllUsers, addUser } from '../../../apis/AdminDashboardApis';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -10,9 +10,14 @@ const UserManagement = () => {
     addUser: false,
     userList: false
   });
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [addUserSuccess, setAddUserSuccess] = useState(false);
 
   // 1. Extract unique roles
-  const roles = Array.from(new Set(users.map(u => u.role || u.user_type))).filter(Boolean);
+  // Only allow specific roles: remove 'General Practitioner', add 'Nurse'
+  const allowedRoles = ['Patient', 'Administrative Staff', 'Sonographer', 'Cardiologist', 'Nurse'];
+  // Always show all allowed roles as tabs, even if no users exist for that role
+  const roles = allowedRoles;
 
   // 2. State for selected role - default to first role if available
   const [selectedRole, setSelectedRole] = useState('');
@@ -27,6 +32,8 @@ const UserManagement = () => {
     firstName: '',
     lastName: '',
     email: '',
+    age: '',
+    gender: '',
     role: ''
   });
 
@@ -48,26 +55,47 @@ const UserManagement = () => {
 
   // 7. Handle form input changes
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     setNewUser(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'number' ? (value === '' ? '' : parseInt(value, 10)) : value
     }));
   };
 
   // 8. Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Add API call to create user
-    console.log('Creating user:', { ...newUser, role: selectedRole });
-    
-    // Reset form
-    setNewUser({
-      firstName: '',
-      lastName: '',
-      email: '',
-      role: ''
-    });
+    setAddUserLoading(true);
+    setAddUserSuccess(false);
+    try {
+      const payload = {
+        first_name: newUser.firstName,
+        last_name: newUser.lastName,
+        email: newUser.email,
+        age: newUser.age,
+        gender: newUser.gender,
+        role: selectedRole
+      };
+      await addUser(payload);
+      // Optionally, refresh user list
+      const response = await getAllUsers();
+      const fetchedUsers = response.data.data || response.data || [];
+      setUsers(fetchedUsers);
+      setNewUser({
+        firstName: '',
+        lastName: '',
+        email: '',
+        age: '',
+        gender: '',
+        role: ''
+      });
+      setAddUserSuccess(true);
+      setTimeout(() => setAddUserSuccess(false), 3000);
+    } catch (err) {
+      setError('Failed to add user.');
+    } finally {
+      setAddUserLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -99,13 +127,13 @@ const UserManagement = () => {
       <h1 className="text-2xl font-bold mb-6">User Management</h1>
       
       {/* Role Tabs */}
-      {!loading && !error && users.length > 0 && (
+      {!loading && !error && (
         <div className="flex flex-wrap gap-2 mb-6">
           {roles.map(role => (
             <button
               key={role}
               onClick={() => setSelectedRole(role)}
-              className={`px-5 py-2 rounded-full border transition font-medium ${
+              className={`px-4 py-1.5 rounded-full border transition font-medium text-sm ${
                 selectedRole === role
                   ? 'bg-blue-600 text-white border-blue-600 shadow'
                   : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50'
@@ -122,9 +150,9 @@ const UserManagement = () => {
         <div className="bg-white rounded-xl shadow border border-gray-200 mb-6">
           <button
             onClick={() => toggleAccordion('addUser')}
-            className="w-full px-6 py-4 text-left bg-gray-50 hover:bg-gray-100 rounded-t-xl transition-colors flex justify-between items-center"
+            className="w-full px-6 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-t-xl transition-colors flex justify-between items-center"
           >
-            <h2 className="text-xl">Add New {selectedRole}</h2>
+            <h2 className="text-lg">Add New {selectedRole}</h2>
             <svg
               className={`w-6 h-6 text-gray-500 transition-transform ${
                 accordionStates.addUser ? 'rotate-180' : ''
@@ -185,6 +213,39 @@ const UserManagement = () => {
                   />
                 </div>
                 <div>
+                  <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
+                    Age
+                  </label>
+                  <input
+                    type="number"
+                    id="age"
+                    name="age"
+                    value={newUser.age}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+                    Gender
+                  </label>
+                  <select
+                    id="gender"
+                    name="gender"
+                    value={newUser.gender}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
                   <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
                     Role
                   </label>
@@ -200,9 +261,15 @@ const UserManagement = () => {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center justify-center"
+                    disabled={addUserLoading}
                   >
-                    Add User
+                    {addUserLoading ? (
+                      <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                      </svg>
+                    ) : 'Add User'}
                   </button>
                 </div>
               </form>
@@ -215,9 +282,9 @@ const UserManagement = () => {
       <div className="bg-white rounded-xl shadow border border-gray-200">
         <button
           onClick={() => toggleAccordion('userList')}
-          className="w-full px-6 py-4 text-left bg-gray-50 hover:bg-gray-100 rounded-t-xl transition-colors flex justify-between items-center"
+          className="w-full px-6 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-t-xl transition-colors flex justify-between items-center"
         >
-          <h2 className="text-xl">
+          <h2 className="text-lg">
             {loading ? 'Loading...' : error ? 'Error' : `Registered ${selectedRole}s (${filteredUsers.length})`}
           </h2>
           <svg
@@ -312,6 +379,9 @@ const UserManagement = () => {
           </div>
         )}
       </div>
+      {addUserSuccess && (
+        <div className="text-green-600 text-sm mt-2">User registered successfully!</div>
+      )}
     </div>
   );
 };
