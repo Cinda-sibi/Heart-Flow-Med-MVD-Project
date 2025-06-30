@@ -1,7 +1,6 @@
 from django.db import models
 from heart_flow_app.models import ProfileUser , PatientProfile
 # Create your models here.
-# models.py
 
 # models.py
 
@@ -38,6 +37,7 @@ class PatientReferral(models.Model):
     referral_pdf = models.FileField(upload_to='referral_pdf/',null=True , blank=True)
     doctor_notes = models.TextField(null=True , blank=True)
     is_accepted = models.BooleanField(default=False)
+    patient_reports = models.FileField(upload_to='patients_medical_reports/',null=True, blank=True)
 
     def __str__(self):
         return f"{self.patient_first_name} {self.patient_last_name} referred by {self.referred_by.get_full_name()}"

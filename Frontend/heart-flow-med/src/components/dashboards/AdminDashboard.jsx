@@ -303,14 +303,14 @@ const ClinicalDashboard = () => {
         <p><span className="font-medium">Joined:</span> {new Date(user.date_joined).toLocaleDateString()}</p>
       </div>
       <div className="flex gap-2 mt-4">
-        <button className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded text-sm hover:bg-blue-100 transition-colors">
+        {/* <button className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded text-sm hover:bg-blue-100 transition-colors">
           <Edit className="h-4 w-4 inline mr-1" />
           Edit
         </button>
         <button className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded text-sm hover:bg-red-100 transition-colors">
           <Trash2 className="h-4 w-4 inline mr-1" />
           Remove
-        </button>
+        </button> */}
       </div>
     </div>
   );
@@ -409,7 +409,7 @@ const ClinicalDashboard = () => {
           <nav className="flex space-x-8">
             {[
               { id: 'overview', label: 'Overview', icon: Activity },
-              { id: 'patients', label: 'Patients', icon: Users },
+              // { id: 'patients', label: 'Patients', icon: Users },
               { id: 'staff', label: 'Staff Management', icon: UserCheck },
               { id: 'appointments', label: 'Appointments', icon: Calendar },
               { id: 'referrals', label: 'Referrals', icon: FileText }

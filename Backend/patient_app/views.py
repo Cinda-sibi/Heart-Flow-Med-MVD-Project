@@ -12,6 +12,8 @@ from doctor_app.serializers import *
 from django.utils.timezone import now
 from administrative_staff_app.models import *
 import datetime
+from admin_app.models import *
+from nurse_app.serializers import *
 # Create your views here.
 
 
@@ -447,3 +449,22 @@ class ListUpcomingAppointments(APIView):
         return custom_200("Upcoming appointments listed successfully", serializer.data)
 
 
+# list login patinets test result
+class PatientTestResultListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Get the patient's profile
+        patient = PatientProfile.objects.filter(user=user).first()
+        if not patient:
+            return custom_404("Only patients can access their test results.")
+
+        # Get patient's test results
+        test_results = DiagnosticTestResult.objects.filter(
+            appointment__patient=patient
+        ).select_related('appointment__test')
+
+        serializer = PatientTestResultSerializer(test_results, many=True)
+        return custom_200("Patient test results", serializer.data)

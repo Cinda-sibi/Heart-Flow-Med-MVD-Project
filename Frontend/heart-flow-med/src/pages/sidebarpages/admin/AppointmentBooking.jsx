@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, User, MapPin, Edit3, Trash2, ChevronLeft, ChevronRight, Stethoscope, FileText } from 'lucide-react';
 import Modal from "../../../components/layout/Modal";
 import { getAllDoctors, getAllPatients, bookAppointment, getAllDoctorAvailabilities, getAllAppointments, searchDoctorAvailability, editAppointment, cancelAppointment, getDoctorAvailabilityById } from '../../../apis/AdministrativeStaffDashboardApis';
+import { bookDiagnosticAppointment, getAssignableStaffList, getDiagnosticTests, getDiagnosticAppointmentsList } from '../../../apis/AdminDashboardApis';
 import enUS from 'date-fns/locale/en-US';
 import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
@@ -105,7 +106,8 @@ const Appointments = () => {
     date: '',
     time: '',
     notes: '',
-    priority: 'normal'
+    priority: 'normal',
+    assigned_staff: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -130,6 +132,7 @@ const Appointments = () => {
 
   // Test booking related states
   const [tests, setTests] = useState([]);
+  const [staffMembers, setStaffMembers] = useState([]);
   const [testTypes] = useState([
     'Blood Test',
     'ECG',
@@ -142,6 +145,7 @@ const Appointments = () => {
     'Ultrasound',
     'Other'
   ]);
+  const [diagnosticTests, setDiagnosticTests] = useState([]);
 
   // Fetch all doctors, availabilities, and appointments on mount
   useEffect(() => {
@@ -452,11 +456,19 @@ const Appointments = () => {
     setSuccess('');
     setLoading(true);
     try {
-      const patientsData = await getAllPatients();
+      const [patientsData, diagnosticTestsData, assignableStaffData] = await Promise.all([
+        getAllPatients(),
+        getDiagnosticTests(),
+        getAssignableStaffList()
+      ]);
       setPatients(Array.isArray(patientsData.data) ? patientsData.data : []);
+      setDiagnosticTests(Array.isArray(diagnosticTestsData.data?.data) ? diagnosticTestsData.data.data : []);
+      setStaffMembers(Array.isArray(assignableStaffData.data?.data) ? assignableStaffData.data.data : []);
     } catch (err) {
-      setError('Failed to load patients.');
+      setError('Failed to load data.');
       setPatients([]);
+      setDiagnosticTests([]);
+      setStaffMembers([]);
     } finally {
       setLoading(false);
     }
@@ -464,7 +476,7 @@ const Appointments = () => {
 
   const closeTestModal = () => {
     setIsTestModalOpen(false);
-    setTestForm({ patient: '', testType: '', date: '', time: '', notes: '', priority: 'normal' });
+    setTestForm({ patient: '', testType: '', date: '', time: '', notes: '', priority: 'normal', assigned_staff: '' });
     setError('');
     setSuccess('');
   };
@@ -479,30 +491,61 @@ const Appointments = () => {
     setError('');
     setSuccess('');
     try {
-      // This would be replaced with actual test booking API call
+      // Format payload for diagnostic appointment API
       const payload = {
-        patient: testForm.patient,
-        testType: testForm.testType,
+        patient: testForm.patient, // This should be PatientProfile ID, not user ID
+        test: testForm.testType,   // This should be DiagnosticTest ID, not string
         date: testForm.date,
         time: testForm.time,
         notes: testForm.notes,
-        priority: testForm.priority
+        assigned_staff: testForm.assigned_staff
       };
       
-      // Simulate API call - replace with actual API
-      console.log('Booking test:', payload);
+      const response = await bookDiagnosticAppointment(payload);
       
-      setSuccess('Test booked successfully!');
-      setTimeout(() => {
-        closeTestModal();
-      }, 1000);
+      if (response.status) {
+        setSuccess('Test booked successfully!');
+        setTimeout(() => {
+          closeTestModal();
+          // Optionally refresh the tests list here
+          // refreshTests();
+        }, 1000);
+      } else {
+        setError(response.message || 'Failed to book test.');
+      }
     } catch (err) {
-      const backendMsg = err?.response?.data?.message;
-      setError(backendMsg || 'Failed to book test.');
+      // Handle specific field errors from backend
+      if (err?.response?.data?.message) {
+        const errorMessages = err.response.data.message;
+        if (typeof errorMessages === 'object') {
+          // Multiple field errors
+          const errorList = Object.entries(errorMessages)
+            .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+            .join('\n');
+          setError(errorList);
+        } else {
+          // Single error message
+          setError(errorMessages);
+        }
+      } else {
+        setError('Failed to book test. Please check your input and try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'tests') {
+      setLoading(true);
+      getDiagnosticAppointmentsList()
+        .then((res) => {
+          setTests(Array.isArray(res.data?.data) ? res.data.data : []);
+        })
+        .catch(() => setTests([]))
+        .finally(() => setLoading(false));
+    }
+  }, [activeTab]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -819,7 +862,7 @@ const Appointments = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{test.testType || '-'}</div>
+                        <div className="text-sm text-gray-900">{test.test_name || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
@@ -1045,24 +1088,27 @@ const Appointments = () => {
               disabled={loading}
             >
               <option value="">Select Test Type</option>
-              {testTypes.map((type) => (
-                <option key={type} value={type}>{type}</option>
+              {diagnosticTests.map((test) => (
+                <option key={test.id} value={test.id}>{test.name}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Priority</label>
+            <label className="block text-sm font-medium mb-1">Assigned Staff</label>
             <select
-              name="priority"
-              value={testForm.priority}
+              name="assigned_staff"
+              value={testForm.assigned_staff}
               onChange={handleTestFormChange}
               className="w-full border rounded px-3 py-2"
               required
               disabled={loading}
             >
-              <option value="normal">Normal</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
+              <option value="">Select Staff Member</option>
+              {staffMembers.map((staff) => (
+                <option key={staff.id} value={staff.id}>
+                  {staff.full_name} ({staff.role})
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -1101,7 +1147,7 @@ const Appointments = () => {
               placeholder="Any special instructions or requirements..."
             />
           </div>
-          {error && <div className="text-red-600 text-sm">{error}</div>}
+          {error && <div className="text-red-600 text-sm whitespace-pre-line">{error}</div>}
           {success && <div className="text-green-600 text-sm">{success}</div>}
           <div className="flex justify-end">
             <button
@@ -1122,119 +1168,6 @@ const Appointments = () => {
           </div>
         </form>
       </BookingModal>
-
-      {/* Cancel Confirmation Modal */}
-      <Modal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)}>
-        <h2 className="text-xl font-bold mb-4">Cancel Appointment</h2>
-        <p>Are you sure you want to cancel this appointment?</p>
-        <div className="flex justify-end mt-4">
-          <button className="mr-2 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300" onClick={() => setShowCancelModal(false)} disabled={loading}>No</button>
-          <button className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700" onClick={confirmCancel} disabled={loading}>{loading ? 'Cancelling...' : 'Yes, Cancel'}</button>
-        </div>
-      </Modal>
-
-      {/* Edit Appointment Modal */}
-      <Modal isOpen={showEditModal} onClose={() => { setShowEditModal(false); setAppointmentToEdit(null); }}>
-        <h2 className="text-xl font-bold mb-4">Edit Appointment</h2>
-        <form onSubmit={handleEditSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Patient</label>
-            <select
-              name="patient"
-              value={form.patient}
-              onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
-              required
-              disabled={loading}
-            >
-              <option value="">Select Patient</option>
-              {Array.isArray(patients) && patients.map((p) => (
-                <option key={p.user_id || p.id} value={p.user_id || p.id}>
-                  {(p.first_name && p.last_name) 
-                    ? `${p.first_name} ${p.last_name}` 
-                    : p.name || p.full_name || p.username}
-                  {p.unique_id ? ` (${p.unique_id})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Doctor</label>
-            <select
-              name="doctor"
-              value={form.doctor}
-              onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
-              required
-              disabled={loading}
-            >
-              <option value="">Select Doctor</option>
-              {doctors.map((d) => (
-                <option key={d.user_id || d.id} value={d.user_id || d.id}>
-                  {(d.first_name && d.last_name) 
-                    ? `Dr. ${d.first_name} ${d.last_name}` 
-                    : d.name || d.full_name || d.username}
-                  {d.specialization ? ` (${d.specialization})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Date</label>
-            <input
-              type="date"
-              name="date"
-              value={form.date}
-              onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
-              required
-              disabled={loading}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Time</label>
-            <input
-              type="time"
-              name="time"
-              value={form.time}
-              onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
-              required
-              disabled={loading}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Notes</label>
-            <textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
-              rows={2}
-              disabled={loading}
-            />
-          </div>
-          {error && <div className="text-red-600 text-sm">{error}</div>}
-          {success && <div className="text-green-600 text-sm">{success}</div>}
-          <div className="flex justify-end">
-            <button
-              type="button"
-              className="mr-2 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-              onClick={() => { setShowEditModal(false); setAppointmentToEdit(null); }}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-              disabled={loading}
-            >
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </Modal>
 
       {/* Appointment Details Modal */}
       <Modal isOpen={showAppointmentModal} onClose={() => setShowAppointmentModal(false)}>

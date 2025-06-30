@@ -42,6 +42,19 @@ export const listAllDoctorAvailabilities = async () => {
   return response.data;
 };
 
+// Fetch test results for the logged-in patient
+export const fetchPatientTestResults = async () => {
+  try {
+    const response = await axiosInstance.get('/patient-test-results/');
+    if (response.data.status) {
+      return response.data.data;
+    }
+    throw new Error(response.data.message || 'Failed to fetch patient test results');
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch patient test results');
+  }
+};
+
 // Export a default object with all APIs for convenience
 const PatientsDashboardApis = {
   fetchUpcomingAppointments,
@@ -49,6 +62,7 @@ const PatientsDashboardApis = {
   bookAppointment,
   listDoctorAvailabilities,
   listAllDoctorAvailabilities,
+  fetchPatientTestResults,
 };
 
 export default PatientsDashboardApis;

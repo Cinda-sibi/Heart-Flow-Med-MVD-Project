@@ -13,7 +13,7 @@ import {
   TrendingUp,
   Download
 } from 'lucide-react';
-import { fetchUpcomingAppointments } from '../../apis/PatientsDashboardApis';
+import { fetchUpcomingAppointments, fetchPatientTestResults } from '../../apis/PatientsDashboardApis';
 
 const PatientDashboard = () => {
   const [patientData, setPatientData] = useState({
@@ -37,10 +37,11 @@ const PatientDashboard = () => {
       // Fetch upcoming appointments
       const upcomingRes = await fetchUpcomingAppointments();
       let nextAppointment = null;
-      let recentVisits = [];
-      if (upcomingRes.status && Array.isArray(upcomingRes.data) && upcomingRes.data.length > 0) {
-        // First is next appointment, rest are recent visits
-        const [first, ...rest] = upcomingRes.data;
+      let upcomingAppointments = [];
+      
+      if (Array.isArray(upcomingRes) && upcomingRes.length > 0) {
+        // First is next appointment, rest are upcoming appointments
+        const [first, ...rest] = upcomingRes;
         nextAppointment = {
           date: first.date,
           time: first.time,
@@ -48,17 +49,29 @@ const PatientDashboard = () => {
           type: first.status,
           notes: first.notes
         };
-        recentVisits = rest.map(appt => ({
+        upcomingAppointments = rest.map(appt => ({
           date: appt.date,
           doctor: appt.doctor_name,
           type: appt.status,
           notes: appt.notes
         }));
       }
-      // TODO: Replace the following with real API calls for medications, vitals, test results
+      
+      // Fetch patient test results
+      const testResultsRaw = await fetchPatientTestResults();
+      const testResults = Array.isArray(testResultsRaw)
+        ? testResultsRaw.map(result => ({
+            test: result.test_name,
+            date: result.appointment_date,
+            status: result.result_summary || 'Pending Review',
+            downloadable: !!result.attached_report,
+            reportUrl: result.attached_report
+          }))
+        : [];
+        
       setPatientData({
         nextAppointment,
-        recentVisits,
+        recentVisits: upcomingAppointments, // Keep the state name but populate with upcoming appointments
         medications: [
           { name: 'Lisinopril', dosage: '10mg', frequency: 'Once daily', refillDate: '2024-02-28' },
           { name: 'Metoprolol', dosage: '25mg', frequency: 'Twice daily', refillDate: '2024-03-05' },
@@ -70,11 +83,7 @@ const PatientDashboard = () => {
           weight: '165 lbs',
           lastUpdated: '2024-01-15'
         },
-        testResults: [
-          { test: 'Cholesterol Panel', date: '2024-01-15', status: 'Normal', downloadable: true },
-          { test: 'ECG', date: '2023-12-10', status: 'Normal', downloadable: true },
-          { test: 'Blood Count', date: '2023-11-20', status: 'Pending Review', downloadable: false }
-        ]
+        testResults
       });
     } catch (err) {
       setError('Failed to fetch appointments');
@@ -132,7 +141,7 @@ const PatientDashboard = () => {
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Vital Signs */}
-        <InfoCard title="Latest Vital Signs" icon={Activity} color="green">
+        {/* <InfoCard title="Latest Vital Signs" icon={Activity} color="green">
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Blood Pressure</span>
@@ -152,10 +161,10 @@ const PatientDashboard = () => {
               </span>
             </div>
           </div>
-        </InfoCard>
+        </InfoCard> */}
 
         {/* Current Medications */}
-        <InfoCard title="Current Medications" icon={Pill} color="purple">
+        {/* <InfoCard title="Current Medications" icon={Pill} color="purple">
           <div className="space-y-3">
             {patientData.medications.map((med, index) => (
               <div key={index} className="p-3 bg-gray-50 rounded-lg">
@@ -172,7 +181,7 @@ const PatientDashboard = () => {
               </div>
             ))}
           </div>
-        </InfoCard>
+        </InfoCard> */}
 
         {/* Test Results */}
         <InfoCard title="Recent Test Results" icon={FileText} color="blue">
@@ -184,19 +193,13 @@ const PatientDashboard = () => {
                   <p className="text-sm text-gray-600">{result.date}</p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    result.status === 'Normal' 
-                      ? 'bg-green-100 text-green-800'
-                      : result.status === 'Pending Review'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {result.status}
                   </span>
-                  {result.downloadable && (
-                    <button className="p-1 text-gray-400 hover:text-blue-600">
+                  {result.downloadable && result.reportUrl && (
+                    <a href={result.reportUrl} target="_blank" rel="noopener noreferrer" className="p-1 text-gray-400 hover:text-blue-600">
                       <Download className="h-4 w-4" />
-                    </button>
+                    </a>
                   )}
                 </div>
               </div>
@@ -205,10 +208,10 @@ const PatientDashboard = () => {
         </InfoCard>
 
         {/* Recent Visits */}
-        <InfoCard title="Recent Visits" icon={Clock} color="indigo">
+        <InfoCard title="Upcoming Appointments" icon={Clock} color="indigo">
           <div className="space-y-3">
             {patientData.recentVisits.length === 0 ? (
-              <div className="text-gray-500">No recent visits.</div>
+              <div className="text-gray-500">No Upcoming visits.</div>
             ) : patientData.recentVisits.map((visit, index) => (
               <div key={index} className="p-3 bg-gray-50 rounded-lg">
                 <div className="flex justify-between items-start mb-2">
@@ -226,7 +229,7 @@ const PatientDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow p-6">
+      {/* <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <button className="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
@@ -246,7 +249,7 @@ const PatientDashboard = () => {
             <span className="font-medium text-orange-900">Refill Prescription</span>
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

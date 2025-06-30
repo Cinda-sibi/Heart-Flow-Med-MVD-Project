@@ -61,6 +61,16 @@ const GeneralPractitioner = () => {
   const audioChunksRef = React.useRef([]);
   const recognitionAudioRef = React.useRef(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const patientsPerPage = 5;
+  const totalPages = Math.ceil(assignedPatients.length / patientsPerPage);
+
+  const paginatedPatients = assignedPatients.slice(
+    (currentPage - 1) * patientsPerPage,
+    currentPage * patientsPerPage
+  );
+
   // Fetch assigned patients from API
   useEffect(() => {
     setLoading(true);
@@ -331,189 +341,209 @@ const GeneralPractitioner = () => {
           </div>
         </div>
 
-        {/* Assigned Patients Section */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="h-6 w-6 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-900">Recent Assigned Patients</h2>
-          </div>
-          {loading ? (
-            <div className="text-blue-600 text-lg">Loading...</div>
-          ) : error ? (
-            <div className="text-red-600 text-lg">{error}</div>
-          ) : assignedPatients.length === 0 ? (
-            <div className="text-gray-700 text-lg">No assigned patients found.</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {assignedPatients.map((p) => (
-                <div
-                  key={p.id}
-                  className="relative bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex flex-col gap-3 hover:shadow-2xl hover:border-blue-300 transition-transform duration-200 transform hover:-translate-y-1 group overflow-hidden"
-                  style={{ minHeight: '180px' }}
+        {/* Flex Container for Form and Patients */}
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Left: Referral Form */}
+          <div className="w-full">
+            {/* Patient Referral Section with Tabs */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <UserPlus className="h-6 w-6 text-blue-600" />
+                <h2 className="text-xl font-bold text-gray-900">Patient Referral</h2>
+              </div>
+              
+              {/* Tab Navigation */}
+              <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
+                <button
+                  onClick={() => setActiveTab('form')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition ${
+                    activeTab === 'form'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
-                  {/* Colored accent bar */}
-                  <div className="absolute left-0 top-0 h-full w-2 bg-gradient-to-b from-blue-500 to-blue-300 rounded-l-2xl" />
-                  <div className="flex items-center gap-3 mb-2 z-10">
-                    <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center shadow group-hover:bg-blue-200 transition">
-                      <Users className="h-7 w-7 text-blue-600" />
-                    </div>
-                    <div>
-                      <span className="font-bold text-lg text-gray-900 block leading-tight">{p.name}</span>
-                      <span className="text-sm text-gray-500">Age: <span className="font-semibold text-gray-700">{p.age}</span></span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1 z-10">
-                    {/* Status badge with icon */}
-                    <span className={`inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full font-semibold shadow-sm ${statusColors[p.status] || 'bg-gray-100 text-gray-700'}`}
-                      >
-                      {p.status === 'Pending' && <MicOff className="h-3 w-3" />}
-                      {p.status === 'Active' && <Play className="h-3 w-3" />}
-                      {p.status === 'Accepted' && <Play className="h-3 w-3" />}
-                      {p.status === 'Rejected' && <Square className="h-3 w-3" />}
-                      {p.status}
-                    </span>
-                  </div>
-                  <div className="flex-1" />
-                  <button
-                    className="mt-4 px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg font-bold shadow-lg hover:from-blue-700 hover:to-blue-500 transition w-fit z-10"
-                    onClick={() => alert('View details for ' + p.name)}
+                  <FileText className="h-4 w-4" />
+                  Patient Details Form
+                </button>
+                {/* <button
+                  onClick={() => setActiveTab('audio')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition ${
+                    activeTab === 'audio'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <Mic className="h-4 w-4" />
+                  Audio Recording
+                </button> */}
+              </div>
+
+              {/* Tab Content */}
+              {activeTab === 'form' && (
+                <form className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleReferralSubmit}>
+                  <input
+                    type="text"
+                    name="patient_first_name"
+                    className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    placeholder="First Name"
+                    value={form.patient_first_name}
+                    onChange={handleFormChange}
+                  />
+                 
+                
+                  <input
+                    type="text"
+                    name="patient_last_name"
+                    className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    placeholder="Last Name"
+                    value={form.patient_last_name}
+                    onChange={handleFormChange}
+                  />
+               
+                  <input
+                    type="email"
+                    name="patient_email"
+                    className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    placeholder="Email"
+                    value={form.patient_email}
+                    onChange={handleFormChange}
+                  />
+                  
+                  <input
+                    type="text"
+                    name="patient_phone"
+                    className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    placeholder="Phone"
+                    value={form.patient_phone}
+                    onChange={handleFormChange}
+                  />
+                  
+                  <select
+                    name="gender"
+                    className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    value={form.gender}
+                    onChange={handleFormChange}
                   >
-                    View Details
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <input
+                    type="number"
+                    name="age"
+                    className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    placeholder="Age"
+                    value={form.age}
+                    onChange={handleFormChange}
+                    min="0"
+                  />
+                  <textarea
+                    name="symptoms"
+                    className="border rounded-lg px-4 py-3 md:col-span-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    placeholder="Symptoms"
+                    value={form.symptoms}
+                    onChange={handleFormChange}
+                    rows={3}
+                  />
+                 
+                  <textarea
+                    name="reason"
+                    className="border rounded-lg px-4 py-3 md:col-span-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    placeholder="Reason for referral"
+                    value={form.reason}
+                    onChange={handleFormChange}
+                    rows={3}
+                  />
+                 
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 md:col-span-2 font-semibold text-lg shadow"
+                    disabled={formLoading}
+                  >
+                    {formLoading ? 'Submitting...' : 'Submit Referral'}
+                  </button>
+                  {formError && <div className="mt-2 text-red-600 md:col-span-2">{formError}</div>}
+                  {formSuccess && <div className="mt-2 text-green-600 md:col-span-2">{formSuccess}</div>}
+                </form>
+              )}
+
+              {activeTab === 'audio' && null}
+            </section>
+          </div>
+          {/* Right: Recent Referred Patients */}
+          <div className="w-full">
+            <div className="flex items-center gap-2 mb-4">
+              <Users className="h-6 w-6 text-blue-600" />
+              <h2 className="text-xl font-bold text-gray-900">Recent Referred Patients</h2>
+            </div>
+            {loading ? (
+              <div className="text-blue-600 text-lg">Loading...</div>
+            ) : error ? (
+              <div className="text-red-600 text-lg">{error}</div>
+            ) : assignedPatients.length === 0 ? (
+              <div className="text-gray-700 text-lg">No assigned patients found.</div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow border border-gray-100 p-8">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-700">Patient Name</th>
+                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-700">Age</th>
+                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-700">Status</th>
+                      <th className="px-4 py-2 text-left text-xs font-bold text-gray-700">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedPatients.map((p) => (
+                      <tr key={p.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 font-semibold">{p.name}</td>
+                        <td className="px-4 py-2">{p.age}</td>
+                        <td className="px-4 py-2">
+                          <span className={`inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full font-semibold shadow-sm ${statusColors[p.status] || 'bg-gray-100 text-gray-700'}`}>
+                            {p.status === 'Pending' && <MicOff className="h-3 w-3" />}
+                            {p.status === 'Active' && <Play className="h-3 w-3" />}
+                            {p.status === 'Accepted' && <Play className="h-3 w-3" />}
+                            {p.status === 'Rejected' && <Square className="h-3 w-3" />}
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2">
+                          <button
+                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            onClick={() => alert('View details for ' + p.name)}
+                          >
+                            View Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {/* Pagination Controls */}
+                <div className="flex justify-between items-center mt-4">
+                  <button
+                    className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
                   </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Divider */}
-        <div className="border-t border-gray-200 my-8" />
-
-        {/* Patient Referral Section with Tabs */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <UserPlus className="h-6 w-6 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-900">Patient Referral</h2>
+              </div>
+            )}
           </div>
-          
-          {/* Tab Navigation */}
-          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
-            <button
-              onClick={() => setActiveTab('form')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition ${
-                activeTab === 'form'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <FileText className="h-4 w-4" />
-              Patient Details Form
-            </button>
-            {/* <button
-              onClick={() => setActiveTab('audio')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition ${
-                activeTab === 'audio'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Mic className="h-4 w-4" />
-              Audio Recording
-            </button> */}
-          </div>
-
-          {/* Tab Content */}
-          {activeTab === 'form' && (
-            <form className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleReferralSubmit}>
-              <input
-                type="text"
-                name="patient_first_name"
-                className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                placeholder="First Name"
-                value={form.patient_first_name}
-                onChange={handleFormChange}
-              />
-             
-            
-              <input
-                type="text"
-                name="patient_last_name"
-                className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                placeholder="Last Name"
-                value={form.patient_last_name}
-                onChange={handleFormChange}
-              />
-           
-              <input
-                type="email"
-                name="patient_email"
-                className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                placeholder="Email"
-                value={form.patient_email}
-                onChange={handleFormChange}
-              />
-              
-              <input
-                type="text"
-                name="patient_phone"
-                className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                placeholder="Phone"
-                value={form.patient_phone}
-                onChange={handleFormChange}
-              />
-              
-              <select
-                name="gender"
-                className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                value={form.gender}
-                onChange={handleFormChange}
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-              <input
-                type="number"
-                name="age"
-                className="border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                placeholder="Age"
-                value={form.age}
-                onChange={handleFormChange}
-                min="0"
-              />
-              <textarea
-                name="symptoms"
-                className="border rounded-lg px-4 py-3 md:col-span-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                placeholder="Symptoms"
-                value={form.symptoms}
-                onChange={handleFormChange}
-                rows={3}
-              />
-             
-              <textarea
-                name="reason"
-                className="border rounded-lg px-4 py-3 md:col-span-2 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                placeholder="Reason for referral"
-                value={form.reason}
-                onChange={handleFormChange}
-                rows={3}
-              />
-             
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 md:col-span-2 font-semibold text-lg shadow"
-                disabled={formLoading}
-              >
-                {formLoading ? 'Submitting...' : 'Submit Referral'}
-              </button>
-              {formError && <div className="mt-2 text-red-600 md:col-span-2">{formError}</div>}
-              {formSuccess && <div className="mt-2 text-green-600 md:col-span-2">{formSuccess}</div>}
-            </form>
-          )}
-
-          {activeTab === 'audio' && null}
-        </section>
+        </div>
       </div>
     </main>
   );

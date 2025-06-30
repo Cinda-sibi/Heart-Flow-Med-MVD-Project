@@ -63,7 +63,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         return [
           ...commonItems,
           { name: 'My Appointments', href: '/my-appointments', icon: Calendar },
-          { name: 'Medical History', href: '/medical-history', icon: FileText },
+          // { name: 'Medical History', href: '/medical-history', icon: FileText },
           { name: 'Test Results', href: '/test-results', icon: Activity },
           profileItem,
         ];

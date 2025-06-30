@@ -56,6 +56,8 @@ const CardiologistDashboard = () => {
   const [ongoingPage, setOngoingPage] = useState(1);
   const [registeringId, setRegisteringId] = useState(null); // Track which referral is being registered
   const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [referralToRegister, setReferralToRegister] = useState(null);
 
   useEffect(() => {
     // Fetch dashboard data
@@ -383,7 +385,10 @@ const CardiologistDashboard = () => {
                         <button
                           className="self-end mt-2 px-3 py-1 text-xs rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors disabled:opacity-60 flex items-center gap-1"
                           title="Accept & Register"
-                          onClick={() => handleAcceptAndRegister(ref)}
+                          onClick={() => {
+                            setReferralToRegister(ref);
+                            setShowConfirmModal(true);
+                          }}
                           disabled={registeringId === ref.id}
                         >
                           {registeringId === ref.id ? (
@@ -466,7 +471,10 @@ const CardiologistDashboard = () => {
                         <button
                           className="self-end mt-2 px-3 py-1 text-xs rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors disabled:opacity-60 flex items-center gap-1"
                           title="Accept & Register"
-                          onClick={() => handleAcceptAndRegister(ref)}
+                          onClick={() => {
+                            setReferralToRegister(ref);
+                            setShowConfirmModal(true);
+                          }}
                           disabled={registeringId === ref.id}
                         >
                           {registeringId === ref.id ? (
@@ -669,7 +677,7 @@ const CardiologistDashboard = () => {
                 </div>
               </div>
               {/* Right: PDF Preview */}
-              <div className="md:w-1/2 p-8 flex flex-col items-center justify-center bg-white">
+              {/* <div className="md:w-1/2 p-8 flex flex-col items-center justify-center bg-white">
                 <h3 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2"><FileText className="h-5 w-5 text-green-600" /> Referral PDF</h3>
                 {selectedReferral.referral_pdf ? (
                   <>
@@ -694,7 +702,7 @@ const CardiologistDashboard = () => {
                 ) : (
                   <div className="text-gray-400 italic">No PDF available for this referral.</div>
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -704,6 +712,73 @@ const CardiologistDashboard = () => {
       {registerSuccess && (
         <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg text-lg font-semibold transition-all">
           Patient registered successfully!
+        </div>
+      )}
+
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 transition-opacity">
+          <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fadeInScale">
+            {/* Close Button */}
+            <button
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"
+              onClick={() => setShowConfirmModal(false)}
+              aria-label="Close"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            {/* Icon */}
+            <div className="flex items-center justify-center mb-4">
+              <div className="bg-green-100 rounded-full p-3">
+                <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-center mb-2 text-gray-900">Confirm Registration</h2>
+            {/* Divider */}
+            <div className="border-b border-gray-200 mb-4"></div>
+            {/* Message */}
+            <p className="text-center text-gray-700 mb-6">
+              Are you sure you want to accept and register
+              <span className="font-semibold text-gray-900"> {referralToRegister?.patient_first_name} {referralToRegister?.patient_last_name}</span>?
+            </p>
+            {/* Buttons */}
+            <div className="flex justify-center gap-4">
+              <button
+                className="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-5 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 shadow transition"
+                onClick={async () => {
+                  setShowConfirmModal(false);
+                  if (referralToRegister) {
+                    await handleAcceptAndRegister(referralToRegister);
+                    setReferralToRegister(null);
+                  }
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+          {/* Animation keyframes (add to your global CSS if not present) */}
+          <style>
+            {`
+              @keyframes fadeInScale {
+                0% { opacity: 0; transform: scale(0.95);}
+                100% { opacity: 1; transform: scale(1);}
+              }
+              .animate-fadeInScale {
+                animation: fadeInScale 0.25s cubic-bezier(0.4,0,0.2,1);
+              }
+            `}
+          </style>
         </div>
       )}
     </div>

@@ -33,6 +33,14 @@ class OngoingLinkedReferralsAPIView(APIView):
         serializer = PatientReferralSerializer(referrals, many=True)
         return custom_200("Ongoing referrals",serializer.data)
 
+# list tests available
+class DiagnosticTestListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tests = DiagnosticTest.objects.all()
+        serializer = DiagnosticTestSerializer(tests, many=True)
+        return custom_200("List of available diagnostic tests", serializer.data)
 
 # booking appointment for tests 
 class BookDiagnosticAppointment(APIView):
@@ -44,10 +52,96 @@ class BookDiagnosticAppointment(APIView):
 
         serializer = DiagnosticAppointmentSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(booked_by=request.user)
+            appointment = serializer.save(booked_by=request.user)
+            staff = appointment.assigned_staff
+            Notification.objects.create(
+                user=staff,
+                notification_type='appointment_created',
+                title='New Diagnostic Appointment Assigned',
+                message=f"You have been assigned to a diagnostic test for patient {appointment.patient.user.get_full_name()} on {appointment.date} at {appointment.time}.",
+                appointment=appointment  # This must be compatible with your Notification model (see note below)
+            )
             return custom_200("DiagnosticTest Appointment booked successfully ",serializer.data)
         return custom_404(serializer.errors)
-    
+
+# list diagonistic appointments
+class DiagnosticAppointmentListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Optionally filter based on user role
+        user = request.user
+        if user.role in ['Nurse', 'Sonographer']:
+            appointments = DiagnosticAppointment.objects.filter(assigned_staff=user)
+        else:
+            appointments = DiagnosticAppointment.objects.all()
+
+        appointments = appointments.select_related('patient__user', 'assigned_staff', 'test')
+        serializer = DiagnosticAppointmentListSerializer(appointments, many=True)
+        return custom_200("List of diagnostic test appointments", serializer.data)    
+
+
+# update and delete test appointments
+class DiagnosticAppointmentUpdateDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return DiagnosticAppointment.objects.get(pk=pk)
+        except DiagnosticAppointment.DoesNotExist:
+            return None
+
+    def patch(self, request, pk):
+        if request.user.role != "Admin":
+            return custom_404("Only Admins can update diagnostic appointments.")
+
+        appointment = self.get_object(pk)
+        if not appointment:
+            return custom_404("Diagnostic appointment not found.")
+
+        serializer = DiagnosticAppointmentSerializer(appointment, data=request.data, partial=True)
+        if serializer.is_valid():
+            updated_appointment = serializer.save()
+
+            staff = updated_appointment.assigned_staff
+            Notification.objects.create(
+                user=staff,
+                notification_type='appointment_updated',
+                title='Diagnostic Appointment Updated',
+                message=(
+                    f"Your diagnostic test appointment for patient "
+                    f"{updated_appointment.patient.user.get_full_name()} on "
+                    f"{updated_appointment.date} at {updated_appointment.time} has been updated.",
+                ),
+                appointment=updated_appointment
+            )
+
+            return custom_200("Diagnostic appointment updated successfully.", serializer.data)
+        return custom_404(serializer.errors)
+
+    def delete(self, request, pk):
+        if request.user.role != "Admin":
+            return custom_404("Only Admins can delete diagnostic appointments.")
+
+        appointment = self.get_object(pk)
+        if not appointment:
+            return custom_404("Diagnostic appointment not found.")
+
+        staff = appointment.assigned_staff
+        Notification.objects.create(
+            user=staff,
+            notification_type='appointment_cancelled',
+            title='Diagnostic Appointment Cancelled',
+            message=(
+                f"Your diagnostic test appointment for patient "
+                f"{appointment.patient.user.get_full_name()} on "
+                f"{appointment.date} at {appointment.time} has been cancelled."
+            )
+        )
+
+        appointment.delete()
+        return custom_200("Diagnostic appointment deleted successfully.")
+
 
 # user registration
 class RegisterUserAPIView(APIView):
@@ -96,3 +190,15 @@ class ListUsersByRoleAPIView(APIView):
         users = ProfileUser.objects.filter(role=role)
         serializer = UserListByRoleSerializer(users, many=True)
         return custom_200("User listed successflly",serializer.data)
+
+
+# list staffs for assigning the blood tests
+class AssignableStaffListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # List all staff with role Nurse or Sonographer
+        staff_members = ProfileUser.objects.filter(role__in=['Nurse', 'Sonographer'])
+
+        serializer = AssignedStaffListSerializer(staff_members, many=True)
+        return custom_200("Assignable staff list", serializer.data)

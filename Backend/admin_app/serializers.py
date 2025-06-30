@@ -29,14 +29,28 @@ class ProfileUserListSerializer(serializers.ModelSerializer):
 class DiagnosticTestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiagnosticTest
-        fields = '__all__'
+        fields = ['id','name']
 
 
 class DiagnosticAppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiagnosticAppointment
         fields = '__all__'
+        read_only_fields = ['booked_by', 'created_at']
 
+
+
+class DiagnosticAppointmentListSerializer(serializers.ModelSerializer):
+    patient_name = serializers.CharField(source='patient.user.get_full_name', read_only=True)
+    staff_name = serializers.CharField(source='assigned_staff.get_full_name', read_only=True)
+    test_name = serializers.CharField(source='test.name', read_only=True)
+
+    class Meta:
+        model = DiagnosticAppointment
+        fields = [
+            'id', 'patient_name', 'test_name', 'date', 'time',
+            'status', 'staff_name', 'notes'
+        ]
 
 # user registration
 class UserRegistrationSerializer(serializers.Serializer):
@@ -206,3 +220,12 @@ class UserListByRoleSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return obj.get_full_name()
+
+# listing the assigned staffs 
+
+class AssignedStaffListSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source='get_full_name')
+
+    class Meta:
+        model = ProfileUser
+        fields = ['id', 'full_name', 'email', 'role']

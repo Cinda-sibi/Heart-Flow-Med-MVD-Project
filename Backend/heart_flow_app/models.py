@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from . manager import CustomUserManager
-
 class ProfileUser(AbstractUser):
     ROLE_CHOICES = [
         ('Admin', 'Admin'),
@@ -167,6 +166,13 @@ class Notification(models.Model):
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, null=True, blank=True)
+    diagnostic_appointment = models.ForeignKey(
+        'admin_app.DiagnosticAppointment',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='test_notifications'
+    )
 
     class Meta:
         ordering = ['-created_at']

@@ -5,6 +5,7 @@ from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from heart_flow_app. utils import *
+from admin_app.models import *
 
 class ProfileUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -56,3 +57,17 @@ class BookAppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = '__all__'
         
+
+# serializers.py
+class PatientTestResultSerializer(serializers.ModelSerializer):
+    patient_name = serializers.SerializerMethodField()
+    test_name = serializers.CharField(source='appointment.test.name')
+    appointment_date = serializers.DateField(source='appointment.date')
+    appointment_time = serializers.TimeField(source='appointment.time')
+
+    class Meta:
+        model = DiagnosticTestResult
+        fields = ['id', 'patient_name','test_name', 'appointment_date', 'appointment_time', 'result_summary', 'attached_report', 'recorded_at']
+    
+    def get_patient_name(self, obj):
+        return obj.appointment.patient.user.get_full_name()
